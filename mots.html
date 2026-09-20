@@ -375,7 +375,8 @@
 </div>
 
   <footer>
-    <a href="index.html">L'addition binaire</a> &nbsp;•&nbsp;
+    <a href="index.html">Accueil</a> &nbsp;•&nbsp;
+    <a href="additionneur_binaire.html">L'addition binaire</a> &nbsp;•&nbsp;
     <a href="horloge.html">L'horloge</a>
   </footer>
 
@@ -931,6 +932,13 @@
   buildControls();
   syncButtons();
   render();
+
+  /* ouverture directe du mode dictée via ?mode=dictee */
+  try {
+    if (new URLSearchParams(window.location.search).get("mode") === "dictee"){
+      setMode("dictee");
+    }
+  } catch (e) {}
 })();
 </script>
 </body>
