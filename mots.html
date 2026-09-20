@@ -105,10 +105,7 @@
   .corgi-zone{position:relative;display:flex;justify-content:center;min-height:195px;align-items:flex-end;width:100%}
   .corgi-wrap{transform-origin:50% 100%}
   .corgi-wrap.hop{animation:hop .75s ease}
-  .corgi-svg{width:165px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
-  .corgi-img{display:none;width:225px;height:225px;object-fit:contain;animation:bob 2.8s ease-in-out infinite}
-  .corgi-wrap.has-img .corgi-img{display:block}
-  .corgi-wrap.has-img .corgi-svg{display:none}
+  .corgi-photo{width:210px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes hop{
     0%{transform:translateY(0) rotate(0)}
@@ -230,8 +227,7 @@
 
   @media(max-width:760px){
     .corgi-zone{min-height:170px}
-    .corgi-svg{width:135px}
-    .corgi-img{width:180px;height:180px}
+    .corgi-photo{width:160px}
   }
 </style>
 </head>
@@ -260,73 +256,8 @@
 
     <div class="corgi-zone">
       <div class="speech" id="speech">Bravo !</div>
-      <div class="corgi-wrap clickable" id="corgi" role="button" tabindex="0"
-           title="Clique sur le corgi quand tu as réussi">
-        <img class="corgi-img" src="corgi.svg" alt="Corgi"
-             onload="this.parentNode.classList.add('has-img')"
-             onerror="this.remove()">
-        <svg class="corgi-svg" viewBox="0 0 260 292" aria-label="Corgi">
-          <defs>
-            <clipPath id="headClip"><ellipse cx="130" cy="104" rx="66" ry="62"/></clipPath>
-          </defs>
-          <g stroke="#3a2a1e" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
-            <g>
-              <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
-              <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
-              <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
-            </g>
-            <g transform="translate(260,0) scale(-1,1)">
-              <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
-              <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
-              <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
-            </g>
-            <rect x="64" y="150" width="132" height="112" rx="56" fill="#f5a63c"/>
-            <ellipse cx="130" cy="104" rx="66" ry="62" fill="#f5a63c"/>
-            <g clip-path="url(#headClip)" stroke="none">
-              <path d="M130,40 C143,44 149,74 145,104 C141,126 137,136 130,136 C123,136 119,126 115,104 C111,74 117,44 130,40 Z" fill="#fff6e6"/>
-              <path d="M-20,118 Q130,154 280,118 L280,260 L-20,260 Z" fill="#fff6e6"/>
-            </g>
-            <ellipse cx="130" cy="104" rx="66" ry="62" fill="none"/>
-            <ellipse cx="98" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
-            <ellipse cx="162" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
-            <ellipse cx="100" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
-            <ellipse cx="160" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
-            <circle cx="105" cy="98" r="4.6" fill="#fff" stroke="none"/>
-            <circle cx="97" cy="110" r="2.6" fill="#fff" stroke="none"/>
-            <circle cx="165" cy="98" r="4.6" fill="#fff" stroke="none"/>
-            <circle cx="157" cy="110" r="2.6" fill="#fff" stroke="none"/>
-            <ellipse cx="130" cy="130" rx="12" ry="9" fill="#241a12" stroke="none"/>
-            <ellipse cx="126" cy="127" rx="3.4" ry="2.4" fill="#fff" opacity=".85" stroke="none"/>
-            <path d="M130,139 V144" stroke="#241a12" stroke-width="3.5" fill="none"/>
-            <path d="M130,144 q-11,12 -22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
-            <path d="M130,144 q11,12 22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
-            <path d="M130,260 C98,232 52,206 52,168 C52,146 74,134 94,139 C111,143 123,157 130,171 C137,157 149,143 166,139 C186,134 208,146 208,168 C208,206 162,232 130,260 Z" fill="#ed2f2f"/>
-            <g>
-              <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
-              <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-              <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-            </g>
-            <g transform="translate(260,0) scale(-1,1)">
-              <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
-              <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-              <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-            </g>
-            <g>
-              <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
-              <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
-              <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-            </g>
-            <g transform="translate(260,0) scale(-1,1)">
-              <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
-              <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
-              <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-            </g>
-          </g>
-        </svg>
+      <div class="corgi-wrap clickable" id="corgi"
+        <img class="corgi-photo" id="corgiImg" src="Content.png" alt="Corgi">
       </div>
     </div>
 
@@ -373,21 +304,12 @@
 
     <div class="corgi-zone">
       <div class="speech" id="speechD">Bravo !</div>
-      <div class="corgi-wrap clickable" id="corgiD" role="button" tabindex="0"
-           title="Clique sur le corgi quand tu as réussi">
-        <img class="corgi-img" src="corgi.svg" alt="Corgi"
-             onload="this.parentNode.classList.add('has-img')"
-             onerror="this.remove()">
+      <div class="corgi-wrap clickable" id="corgiD"
+        <img class="corgi-photo" id="corgiDImg" src="Content.png" alt="Corgi">
       </div>
     </div>
 
     <p class="msg" id="msgD"></p>
-
-    <div class="buttons">
-      <button type="button" id="prevDayD">← Jour précédent</button>
-      <button type="button" class="good" id="goodD">J'ai réussi !</button>
-      <button type="button" class="primary" id="nextDayD">Jour suivant →</button>
-    </div>
   </div>
 </div>
 
@@ -399,6 +321,7 @@
 
 <canvas id="confetti"></canvas>
 
+<script src="corgi.js"></script>
 <script>
 (function(){
   "use strict";
@@ -424,6 +347,7 @@
   var progressEl = document.getElementById("progress");
   var msgEl = document.getElementById("msg");
   var corgi = document.getElementById("corgi");
+  var corgiCtl = Corgi.create(document.getElementById("corgiImg"));
   var speech = document.getElementById("speech");
   var lessonBtns = document.getElementById("lessonBtns");
 
@@ -585,6 +509,7 @@
     playBravoSound();
     launchConfetti();
     corgiHop();
+    corgiCtl.happy();
     showSpeech("Bravo !");
     msgEl.textContent = "Bravo, le corgi est content !";
     msgEl.className = "msg ok";
@@ -713,6 +638,7 @@
   var dictList = document.getElementById("dictList");
   var msgD = document.getElementById("msgD");
   var corgiD = document.getElementById("corgiD");
+  var corgiCtlD = Corgi.create(document.getElementById("corgiDImg"));
   var speechD = document.getElementById("speechD");
 
   function currentDictee(){
@@ -881,16 +807,6 @@
     window.speechSynthesis.speak(u);
   }
 
-  /* ---------- navigation entre les jours ---------- */
-  document.getElementById("nextDayD").addEventListener("click", function(){
-    day = (day % 4) + 1;
-    syncButtons(); render();
-  });
-  document.getElementById("prevDayD").addEventListener("click", function(){
-    day = ((day + 2) % 4) + 1;
-    syncButtons(); render();
-  });
-
   /* ---------- auto-évaluation : son + confettis + corgi ---------- */
   function bravo(){
     msgD.textContent = "Bravo, le corgi est content de toi !";
@@ -898,10 +814,9 @@
     if (window.playBravoSound) window.playBravoSound();
     if (window.launchConfetti) window.launchConfetti();
     corgiHop();
+    corgiCtlD.happy();
     showSpeechD("Bravo !");
   }
-
-  document.getElementById("goodD").addEventListener("click", bravo);
 
   corgiD.addEventListener("click", bravo);
   corgiD.addEventListener("keydown", function(evt){

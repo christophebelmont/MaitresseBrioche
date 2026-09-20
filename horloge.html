@@ -99,10 +99,7 @@
   .corgi-zone{position:relative;display:flex;justify-content:center;min-height:215px;align-items:flex-end}
   .corgi-wrap{transform-origin:50% 100%}
   .corgi-wrap.hop{animation:hop .75s ease}
-  .corgi-svg{width:180px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
-  .corgi-img{display:none;width:245px;height:245px;object-fit:contain;animation:bob 2.8s ease-in-out infinite}
-  .corgi-wrap.has-img .corgi-img{display:block}
-  .corgi-wrap.has-img .corgi-svg{display:none}
+  .corgi-photo{width:225px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes hop{
     0%{transform:translateY(0) rotate(0)}
@@ -211,8 +208,7 @@
   @media(max-width:760px){
     .game{grid-template-columns:1fr}
     .corgi-zone{min-height:190px}
-    .corgi-svg{width:150px}
-    .corgi-img{width:195px;height:195px}
+    .corgi-photo{width:170px}
   }
 </style>
 </head>
@@ -279,82 +275,7 @@
       <div class="corgi-zone">
         <div class="speech" id="speech">Bravo !</div>
         <div class="corgi-wrap" id="corgi">
-          <img class="corgi-img" src="corgi.svg" alt="Corgi"
-               onload="this.parentNode.classList.add('has-img')"
-               onerror="this.remove()">
-          <svg class="corgi-svg" viewBox="0 0 260 292" aria-label="Corgi">
-            <defs>
-              <clipPath id="headClip"><ellipse cx="130" cy="104" rx="66" ry="62"/></clipPath>
-            </defs>
-            <g stroke="#3a2a1e" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
-              <!-- oreilles -->
-              <g>
-                <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
-                <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
-                <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
-              </g>
-              <g transform="translate(260,0) scale(-1,1)">
-                <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
-                <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
-                <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
-              </g>
-              <!-- corps -->
-              <rect x="64" y="150" width="132" height="112" rx="56" fill="#f5a63c"/>
-              <!-- tête -->
-              <ellipse cx="130" cy="104" rx="66" ry="62" fill="#f5a63c"/>
-              <!-- pelage clair du visage, découpé selon la tête -->
-              <g clip-path="url(#headClip)" stroke="none">
-                <path d="M130,40 C143,44 149,74 145,104 C141,126 137,136 130,136 C123,136 119,126 115,104 C111,74 117,44 130,40 Z" fill="#fff6e6"/>
-                <path d="M-20,118 Q130,154 280,118 L280,260 L-20,260 Z" fill="#fff6e6"/>
-              </g>
-              <ellipse cx="130" cy="104" rx="66" ry="62" fill="none"/>
-              <!-- taches claires au-dessus des yeux -->
-              <ellipse cx="98" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
-              <ellipse cx="162" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
-              <!-- yeux -->
-              <ellipse cx="100" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
-              <ellipse cx="160" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
-              <circle cx="105" cy="98" r="4.6" fill="#fff" stroke="none"/>
-              <circle cx="97" cy="110" r="2.6" fill="#fff" stroke="none"/>
-              <circle cx="165" cy="98" r="4.6" fill="#fff" stroke="none"/>
-              <circle cx="157" cy="110" r="2.6" fill="#fff" stroke="none"/>
-              <!-- nez -->
-              <ellipse cx="130" cy="130" rx="12" ry="9" fill="#241a12" stroke="none"/>
-              <ellipse cx="126" cy="127" rx="3.4" ry="2.4" fill="#fff" opacity=".85" stroke="none"/>
-              <!-- bouche -->
-              <path d="M130,139 V144" stroke="#241a12" stroke-width="3.5" fill="none"/>
-              <path d="M130,144 q-11,12 -22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
-              <path d="M130,144 q11,12 22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
-              <!-- cœur -->
-              <path d="M130,260 C98,232 52,206 52,168 C52,146 74,134 94,139 C111,143 123,157 130,171 C137,157 149,143 166,139 C186,134 208,146 208,168 C208,206 162,232 130,260 Z" fill="#ed2f2f"/>
-              <!-- pattes avant -->
-              <g>
-                <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
-                <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-                <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-              </g>
-              <g transform="translate(260,0) scale(-1,1)">
-                <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
-                <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-                <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
-              </g>
-              <!-- pieds -->
-              <g>
-                <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
-                <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
-                <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-                <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-                <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              </g>
-              <g transform="translate(260,0) scale(-1,1)">
-                <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
-                <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
-                <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-                <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-                <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
-              </g>
-            </g>
-          </svg>
+          <img class="corgi-photo" id="corgiImg" src="Content.png" alt="Corgi">
         </div>
       </div>
 
@@ -387,6 +308,7 @@
 
 <canvas id="confetti"></canvas>
 
+<script src="corgi.js"></script>
 <script>
 (function(){
   "use strict";
@@ -400,6 +322,7 @@
   var targetEl = document.getElementById("target");
   var msgEl = document.getElementById("msg");
   var corgi = document.getElementById("corgi");
+  var corgiCtl = Corgi.create(document.getElementById("corgiImg"));
   var speech = document.getElementById("speech");
   var checkBtn = document.getElementById("check");
   var levelBadge = document.getElementById("levelBadge");
@@ -709,6 +632,7 @@
     setMsg("Bravo ! C'est bien " + fmt(target) + ".", "ok");
     launchConfetti();
     corgiHop();
+    corgiCtl.happy();
     showSpeech("Bravo !");
     checkBtn.disabled = true;
 
@@ -732,6 +656,7 @@
     launchConfetti();
     setTimeout(launchConfetti, 300);
     corgiHop();
+    corgiCtl.happy();
     showLevelUp(isFinal);
     setMsg(isFinal ? "Incroyable, tu es champion !" : "Niveau réussi, tu gagnes une coupe !", "ok");
 
@@ -757,6 +682,7 @@
       hint = "L'aiguille courte (heures) n'est pas au bon endroit.";
     }
     setMsg(hint + " Essaie encore !", "no");
+    corgiCtl.sad();
     svg.classList.remove("shake");
     void svg.offsetWidth;
     svg.classList.add("shake");
