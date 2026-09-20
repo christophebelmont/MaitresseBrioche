@@ -100,6 +100,11 @@
   }
 
   .progress-lbl{color:var(--txt);font-size:1.35rem;font-weight:700;letter-spacing:-.5px}
+  .check-row{
+    display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    font-size:.9rem;font-weight:500;color:var(--muted);
+  }
+  .check-row input{width:20px;height:20px;accent-color:var(--blue);cursor:pointer}
 
   /* ---- corgi ---- */
   .corgi-zone{position:relative;display:flex;justify-content:center;min-height:195px;align-items:flex-end;width:100%}
@@ -253,6 +258,11 @@
 
     <div class="progress-lbl" id="progress">Mot 1</div>
 
+    <label class="check-row">
+      <input type="checkbox" id="mixPrev">
+      <span>10 mots dans toutes les dictées jusqu'à celle-ci</span>
+    </label>
+
     <div class="corgi-zone">
       <div class="speech" id="speech">Bravo !</div>
       <div class="corgi-wrap clickable" id="corgi" role="button" tabindex="0"
@@ -346,6 +356,7 @@
   var corgiCtl = Corgi.create(document.getElementById("corgiImg"));
   var speech = document.getElementById("speech");
   var dictSelect = document.getElementById("dictSelect");
+  var mixPrev = document.getElementById("mixPrev");
 
   /* ---------- sons des récompenses ----------
      Liste tous les fichiers .mp3 du dossier : un son est tiré au hasard
@@ -403,8 +414,37 @@
     return range(start, Math.min(start + LESSON_SIZE, words.length));
   }
 
+  function shuffle(arr){
+    for (var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  /* 10 mots tirés au hasard, sans doublon, dans le pool donné */
+  function pickWords(pool, n){
+    var order = shuffle(pool.slice());
+    var chosen = [];
+    var seen = {};
+    for (var i = 0; i < order.length && chosen.length < n; i++){
+      var key = words[order[i]].toLowerCase();
+      if (seen[key]) continue;
+      seen[key] = true;
+      chosen.push(order[i]);
+    }
+    return chosen;
+  }
+
   function startSession(){
-    session = wordsForDictee(dictIndex);
+    if (mixPrev && mixPrev.checked){
+      // 10 mots pris dans toutes les dictées, de la 1re à la dictée en cours
+      var limit = Math.min(words.length, (dictIndex + 1) * LESSON_SIZE);
+      session = pickWords(range(0, limit), LESSON_SIZE);
+    } else {
+      // les mots de la dictée en cours uniquement
+      session = wordsForDictee(dictIndex);
+    }
     pos = 0;
     busy = false;
 
@@ -452,6 +492,10 @@
       dictIndex = parseInt(this.value, 10) || 0;
       startSession();
     });
+  }
+
+  if (mixPrev){
+    mixPrev.addEventListener("change", startSession);
   }
 
   /* ---------- clic sur le corgi = j'ai réussi ---------- */
