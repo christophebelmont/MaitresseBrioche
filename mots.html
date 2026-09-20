@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les mots à écrire de Clara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel2:#f7f7f9;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --on:#ff9500;
+    --on-glow:#ffb340;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --carry:#ff375f;
+    --blue:#0071e3;
+    --blue-dark:#0060c0;
+    --corgi:#e8983f;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff5c8a' fill-opacity='0.10' d='M12 21s-8-5.2-8-11c0-3.3 2.5-5.5 5.5-5.5 1.7 0 3.2 1 4 2.5.8-1.5 2.3-2.5 4-2.5 3 0 5.5 2.2 5.5 5.5 0 5.8-8 11-8 11z'/%3E%3C/svg%3E");
+    background-repeat:repeat;
+    background-attachment:fixed;
+    padding:26px 16px 50px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  h1{
+    text-align:center;
+    font-size:clamp(1.5rem,3.2vw,2.2rem);
+    font-weight:700;
+    margin:0 0 8px;
+    letter-spacing:-.3px;
+  }
+  .sub{
+    text-align:center;
+    color:var(--muted);
+    max-width:720px;
+    margin:0 auto 22px;
+    line-height:1.55;
+    font-size:.98rem;
+  }
+  .sub b{color:var(--txt)}
+
+  .stage{
+    width:100%;
+    max-width:820px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:28px 24px 28px;
+    box-shadow:0 10px 40px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+
+  .word-zone{
+    width:100%;
+    min-height:clamp(160px,32vh,260px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:10px;
+  }
+  .word{
+    font-family:"Dancing Script","Snell Roundhand","Segoe Script","Bradley Hand","Brush Script MT",cursive;
+    font-size:clamp(3.2rem,14vw,7.6rem);
+    font-weight:700;
+    line-height:1.15;
+    color:var(--blue);
+    letter-spacing:0;
+    word-break:break-word;
+    transform-origin:center;
+    padding:0 .06em;
+  }
+  .word.pop{animation:wordPop .55s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes wordPop{
+    0%{transform:scale(.35) rotate(-4deg);opacity:0}
+    55%{transform:scale(1.12) rotate(2deg);opacity:1}
+    75%{transform:scale(.97) rotate(-1deg)}
+    100%{transform:scale(1) rotate(0)}
+  }
+
+  .progress-lbl{color:var(--txt);font-size:1.35rem;font-weight:700;letter-spacing:-.5px}
+
+  /* ---- corgi ---- */
+  .corgi-zone{position:relative;display:flex;justify-content:center;min-height:195px;align-items:flex-end;width:100%}
+  .corgi-wrap{transform-origin:50% 100%}
+  .corgi-wrap.hop{animation:hop .75s ease}
+  .corgi-svg{width:165px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
+  .corgi-img{display:none;width:225px;height:225px;object-fit:contain;animation:bob 2.8s ease-in-out infinite}
+  .corgi-wrap.has-img .corgi-img{display:block}
+  .corgi-wrap.has-img .corgi-svg{display:none}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes hop{
+    0%{transform:translateY(0) rotate(0)}
+    22%{transform:translateY(-46px) rotate(-5deg) scale(1.04)}
+    45%{transform:translateY(0) rotate(2deg)}
+    62%{transform:translateY(-24px) rotate(-3deg)}
+    82%{transform:translateY(0) rotate(1deg)}
+    100%{transform:translateY(0) rotate(0)}
+  }
+  .speech{
+    position:absolute;top:0;left:50%;transform:translateX(-40%) scale(.6);
+    background:#ffffff;color:var(--txt);font-weight:600;font-size:1rem;
+    padding:8px 14px;border-radius:14px;border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(0,0,0,.14);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    white-space:nowrap;
+  }
+  .speech::after{
+    content:"";position:absolute;left:22px;bottom:-8px;
+    border:8px solid transparent;border-top-color:#ffffff;border-bottom:0;
+  }
+  .speech.show{opacity:1;transform:translateX(-40%) scale(1)}
+
+  .msg{
+    text-align:center;font-weight:600;min-height:26px;line-height:1.4;
+    color:var(--muted);transition:color .15s;
+  }
+  .msg.ok{color:var(--ok-text)}
+
+  .buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+  button{
+    font:inherit;font-weight:600;
+    padding:11px 20px;border-radius:12px;cursor:pointer;
+    color:var(--txt);background:#f2f2f7;
+    border:1px solid transparent;transition:background .15s,transform .12s,box-shadow .15s;
+  }
+  button:hover{background:#e8e8ed}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--blue);color:#fff;font-size:1.02rem;padding:12px 26px;box-shadow:0 4px 14px rgba(0,113,227,.3)}
+  button.primary:hover{background:var(--blue-dark)}
+  button.good{
+    background:var(--ok);color:#fff;font-size:1.02rem;padding:12px 28px;
+    box-shadow:0 4px 14px rgba(52,199,89,.3);
+  }
+  button.good:hover{background:#2fb350}
+  button:disabled{opacity:.5;cursor:default;transform:none}
+
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+  /* ---- modes ---- */
+  .hidden{display:none!important}
+  .mode-switch{
+    display:inline-flex;gap:2px;margin:0 auto 26px;padding:4px;
+    background:#e8e8ed;border-radius:980px;
+  }
+  .mode-switch button{padding:8px 22px;border-radius:980px;font-size:.95rem;background:transparent;box-shadow:none}
+  .mode-switch button:hover{background:rgba(0,0,0,.04)}
+  .mode-switch button.active{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14)}
+
+  .lesson-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:100%}
+  .corgi-wrap{display:flex;flex-direction:column;align-items:center}
+  .corgi-wrap.clickable{cursor:pointer;border-radius:18px;transition:filter .15s,transform .15s}
+  .corgi-wrap.clickable:hover{filter:brightness(1.03) drop-shadow(0 6px 14px rgba(255,149,0,.4));transform:translateY(-2px)}
+  .corgi-wrap.clickable:active{transform:translateY(0)}
+  .corgi-wrap.clickable:focus-visible{outline:3px solid var(--blue);outline-offset:8px}
+
+  /* ---- dictee ---- */
+  .dictee-controls{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;width:100%}
+  .ctrl-group{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .ctrl-lbl{color:var(--muted);font-size:.76rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .btn-row button{padding:9px 16px;border-radius:11px;font-size:1rem;min-width:48px}
+  .btn-row button.active{background:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(0,113,227,.3)}
+  .btn-row.stars button{padding:9px 13px;letter-spacing:1px}
+  .btn-row.stars button.active{background:var(--on);color:#fff;box-shadow:0 3px 10px rgba(255,149,0,.35)}
+  .dict-info{color:var(--txt);font-size:.95rem;font-weight:500;text-align:center}
+  .dict-info b{color:var(--blue)}
+  .dict-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+  .dict-list{display:flex;flex-direction:column;gap:12px;width:100%;max-width:700px;margin:6px auto 0}
+  .dicard{
+    background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;
+    box-shadow:0 2px 10px rgba(0,0,0,.04);
+  }
+  .dicard-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .dicard-num{
+    display:inline-flex;align-items:center;justify-content:center;flex:none;
+    width:28px;height:28px;border-radius:50%;
+    background:var(--blue);color:#fff;font-weight:600;font-size:.9rem;
+  }
+  .dicard-stars{color:var(--on);font-size:1rem;letter-spacing:2px;font-weight:700}
+  .dicard-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  button.mini{font-size:.78rem;padding:6px 12px;border-radius:9px;font-weight:600}
+  .dicard-text{
+    margin-top:10px;
+    font-family:"Dancing Script","Snell Roundhand","Segoe Script","Bradley Hand","Brush Script MT",cursive;
+    font-size:clamp(1.7rem,4.4vw,2.4rem);
+    font-weight:600;
+    line-height:1.45;
+    padding:0 .04em;
+    transition:filter .2s,color .2s;
+  }
+  .dicard-text.hidden-text{filter:blur(9px);user-select:none;color:var(--muted)}
+  .dicard-text.revealed{color:var(--ok-text)}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px;line-height:1.7}
+  footer a{color:var(--blue);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    .corgi-zone{min-height:170px}
+    .corgi-svg{width:135px}
+    .corgi-img{width:180px;height:180px}
+  }
+</style>
+</head>
+<body>
+
+  <nav class="mode-switch" aria-label="Choix du mode">
+    <button type="button" id="btnMots" class="active">Mode Mots</button>
+    <button type="button" id="btnDictee">Mode Dictée</button>
+  </nav>
+
+<div id="modeMots">
+  <h1>Les mots à écrire de Clara</h1>
+
+  <div class="stage">
+    <div class="lesson-bar">
+      <span class="ctrl-lbl">Leçon</span>
+      <div class="btn-row" id="lessonBtns"></div>
+      <button type="button" class="mini" id="newSession">Nouvelle session</button>
+    </div>
+
+    <div class="word-zone">
+      <div class="word" id="word">…</div>
+    </div>
+
+    <div class="progress-lbl" id="progress">Mot 1</div>
+
+    <div class="corgi-zone">
+      <div class="speech" id="speech">Bravo !</div>
+      <div class="corgi-wrap clickable" id="corgi" role="button" tabindex="0"
+           title="Clique sur le corgi quand tu as réussi">
+        <img class="corgi-img" src="corgi.svg" alt="Corgi"
+             onload="this.parentNode.classList.add('has-img')"
+             onerror="this.remove()">
+        <svg class="corgi-svg" viewBox="0 0 260 292" aria-label="Corgi">
+          <defs>
+            <clipPath id="headClip"><ellipse cx="130" cy="104" rx="66" ry="62"/></clipPath>
+          </defs>
+          <g stroke="#3a2a1e" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+            <g>
+              <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
+              <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
+              <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
+            </g>
+            <g transform="translate(260,0) scale(-1,1)">
+              <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
+              <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
+              <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
+            </g>
+            <rect x="64" y="150" width="132" height="112" rx="56" fill="#f5a63c"/>
+            <ellipse cx="130" cy="104" rx="66" ry="62" fill="#f5a63c"/>
+            <g clip-path="url(#headClip)" stroke="none">
+              <path d="M130,40 C143,44 149,74 145,104 C141,126 137,136 130,136 C123,136 119,126 115,104 C111,74 117,44 130,40 Z" fill="#fff6e6"/>
+              <path d="M-20,118 Q130,154 280,118 L280,260 L-20,260 Z" fill="#fff6e6"/>
+            </g>
+            <ellipse cx="130" cy="104" rx="66" ry="62" fill="none"/>
+            <ellipse cx="98" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
+            <ellipse cx="162" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
+            <ellipse cx="100" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
+            <ellipse cx="160" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
+            <circle cx="105" cy="98" r="4.6" fill="#fff" stroke="none"/>
+            <circle cx="97" cy="110" r="2.6" fill="#fff" stroke="none"/>
+            <circle cx="165" cy="98" r="4.6" fill="#fff" stroke="none"/>
+            <circle cx="157" cy="110" r="2.6" fill="#fff" stroke="none"/>
+            <ellipse cx="130" cy="130" rx="12" ry="9" fill="#241a12" stroke="none"/>
+            <ellipse cx="126" cy="127" rx="3.4" ry="2.4" fill="#fff" opacity=".85" stroke="none"/>
+            <path d="M130,139 V144" stroke="#241a12" stroke-width="3.5" fill="none"/>
+            <path d="M130,144 q-11,12 -22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
+            <path d="M130,144 q11,12 22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
+            <path d="M130,260 C98,232 52,206 52,168 C52,146 74,134 94,139 C111,143 123,157 130,171 C137,157 149,143 166,139 C186,134 208,146 208,168 C208,206 162,232 130,260 Z" fill="#ed2f2f"/>
+            <g>
+              <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
+              <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+              <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+            </g>
+            <g transform="translate(260,0) scale(-1,1)">
+              <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
+              <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+              <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+            </g>
+            <g>
+              <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
+              <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
+              <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+            </g>
+            <g transform="translate(260,0) scale(-1,1)">
+              <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
+              <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
+              <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <p class="msg" id="msg"></p>
+
+    <div class="buttons">
+      <button type="button" id="prev">← Précédent</button>
+      <button type="button" class="primary" id="next">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODE DICTÉE ===================== -->
+<div id="modeDictee" class="hidden">
+  <h1>Dictée — Les lettres finales muettes</h1>
+
+  <div class="stage">
+    <div class="dictee-controls">
+      <div class="ctrl-group">
+        <span class="ctrl-lbl">Jour de révision</span>
+        <div class="btn-row" id="dayBtns"></div>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-lbl">Mon niveau</span>
+        <div class="btn-row stars" id="starBtns"></div>
+      </div>
+    </div>
+
+    <div class="dict-info" id="dictInfo"></div>
+
+    <div class="dict-actions">
+      <button type="button" class="primary" id="listenAll">▶ Écouter la dictée</button>
+      <button type="button" id="revealAll">Voir toutes les corrections</button>
+      <button type="button" id="hideAll">Tout cacher</button>
+    </div>
+
+    <div class="dict-list" id="dictList"></div>
+
+    <div class="corgi-zone">
+      <div class="speech" id="speechD">Bravo !</div>
+      <div class="corgi-wrap clickable" id="corgiD" role="button" tabindex="0"
+           title="Clique sur le corgi quand tu as réussi">
+        <img class="corgi-img" src="corgi.svg" alt="Corgi"
+             onload="this.parentNode.classList.add('has-img')"
+             onerror="this.remove()">
+      </div>
+    </div>
+
+    <p class="msg" id="msgD"></p>
+
+    <div class="buttons">
+      <button type="button" id="prevDayD">← Jour précédent</button>
+      <button type="button" class="good" id="goodD">J'ai réussi !</button>
+      <button type="button" class="primary" id="nextDayD">Jour suivant →</button>
+    </div>
+  </div>
+</div>
+
+  <footer>
+    <a href="index.html">L'addition binaire</a> &nbsp;•&nbsp;
+    <a href="horloge.html">L'horloge</a>
+  </footer>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var FALLBACK = [
+    "voici","deux","un élève","une année","l'école","un tableau","la maitresse",
+    "noter","un mot","le français","découvrir","la maitresse","nouvelle","la classe",
+    "arriver","dans","un copain","retrouver","le car","la cour","petit","grand",
+    "un enfant","plus","il/elle est","toujours","beaucoup","content","maintenant",
+    "ils/elles sont"
+  ];
+
+  var LESSON_SIZE = 10;   // 10 mots par leçon
+  var ALL = "all";        // mode « toutes les leçons »
+
+  var words = FALLBACK.slice();
+  var lesson = ALL;       // leçon choisie
+  var session = [];       // indices des mots de la session (sans répétition)
+  var pos = 0;            // position courante dans la session
+  var busy = false;       // évite les doubles clics pendant l'animation
+
+  var wordEl = document.getElementById("word");
+  var progressEl = document.getElementById("progress");
+  var msgEl = document.getElementById("msg");
+  var corgi = document.getElementById("corgi");
+  var speech = document.getElementById("speech");
+  var lessonBtns = document.getElementById("lessonBtns");
+
+  /* ---------- sons des récompenses ----------
+     Liste tous les fichiers .mp3 du dossier : un son est tiré au hasard
+     à chaque réussite. (Ajoute ici tout nouveau fichier .mp3.) */
+  var SOUNDS = ["fanfare.mp3", "chien.mp3"];
+  var soundPool = SOUNDS.map(function(src){
+    var a = new Audio(src);
+    a.preload = "auto";
+    return a;
+  });
+
+  function playBravoSound(){
+    if (!soundPool.length) return;
+    try {
+      var a = soundPool[Math.floor(Math.random() * soundPool.length)];
+      a.currentTime = 0;
+      var p = a.play();
+      if (p && p.catch) p.catch(function(){});
+    } catch (e) {}
+  }
+  window.playBravoSound = playBravoSound;
+
+  /* ---------- lecture du fichier mots.txt ---------- */
+  function parseWords(text){
+    return text.split(/\r?\n/)
+      .map(function(w){ return w.trim(); })
+      .filter(function(w){ return w.length > 0; });
+  }
+
+  function loadWords(){
+    fetch("mots.txt")
+      .then(function(r){
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.text();
+      })
+      .then(function(text){
+        var list = parseWords(text);
+        if (list.length) words = list;
+        buildLessonButtons();
+        startSession(ALL);
+      })
+      .catch(function(){
+        buildLessonButtons();
+        startSession(ALL);
+      });
+  }
+
+  /* ---------- leçons et sessions ---------- */
+  function lessonCount(){
+    return Math.max(1, Math.ceil(words.length / LESSON_SIZE));
+  }
+
+  function range(a, b){
+    var r = [];
+    for (var i = a; i < b; i++) r.push(i);
+    return r;
+  }
+
+  function shuffle(arr){
+    for (var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function buildLessonButtons(){
+    lessonBtns.innerHTML = "";
+
+    var all = document.createElement("button");
+    all.type = "button";
+    all.textContent = "Toutes les leçons";
+    all.addEventListener("click", function(){ startSession(ALL); });
+    lessonBtns.appendChild(all);
+
+    for (var l = 1; l <= lessonCount(); l++){
+      (function(n){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "Leçon " + n;
+        b.addEventListener("click", function(){ startSession(n); });
+        lessonBtns.appendChild(b);
+      })(l);
+    }
+  }
+
+  function syncLessonButtons(){
+    var btns = lessonBtns.querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++){
+      var val = (i === 0) ? ALL : i;
+      btns[i].classList.toggle("active", val === lesson);
+    }
+  }
+
+  function startSession(l){
+    lesson = l;
+    if (l === ALL){
+      // 10 mots tirés au hasard dans toutes les leçons, jamais deux fois le même
+      var order = shuffle(range(0, words.length));
+      var chosen = [];
+      var seen = {};
+      for (var k = 0; k < order.length && chosen.length < Math.min(LESSON_SIZE, words.length); k++){
+        var key = words[order[k]].toLowerCase();
+        if (seen[key]) continue;
+        seen[key] = true;
+        chosen.push(order[k]);
+      }
+      session = chosen;
+    } else {
+      // toutes les lignes de la leçon (10 mots), une seule fois chacune
+      var start = (l - 1) * LESSON_SIZE;
+      session = range(start, Math.min(start + LESSON_SIZE, words.length));
+    }
+    pos = 0;
+    busy = false;
+    syncLessonButtons();
+    showPos(false);
+  }
+
+  function lessonName(){
+    return (lesson === ALL) ? "Toutes les leçons" : ("Leçon " + lesson);
+  }
+
+  function showPos(animate){
+    wordEl.textContent = words[session[pos]];
+    progressEl.textContent = "Mot " + (pos + 1) + " / " + session.length;
+    msgEl.textContent = "";
+    msgEl.className = "msg";
+
+    if (animate){
+      wordEl.classList.remove("pop");
+      void wordEl.offsetWidth;
+      wordEl.classList.add("pop");
+    }
+  }
+
+  /* ---------- navigation dans la session ---------- */
+  document.getElementById("next").addEventListener("click", function(){
+    if (busy) return;
+    if (pos < session.length - 1){ pos++; showPos(true); }
+  });
+
+  document.getElementById("prev").addEventListener("click", function(){
+    if (busy) return;
+    if (pos > 0){ pos--; showPos(true); }
+  });
+
+  document.getElementById("newSession").addEventListener("click", function(){
+    startSession(lesson);
+  });
+
+  /* ---------- clic sur le corgi = j'ai réussi ---------- */
+  function success(){
+    if (busy) return;
+    busy = true;
+
+    playBravoSound();
+    launchConfetti();
+    corgiHop();
+    showSpeech("Bravo !");
+    msgEl.textContent = "Bravo, le corgi est content !";
+    msgEl.className = "msg ok";
+
+    setTimeout(function(){
+      if (pos < session.length - 1){
+        pos++;
+        showPos(true);
+        busy = false;
+      } else {
+        finishSession();
+      }
+    }, 3000);
+  }
+
+  function finishSession(){
+    progressEl.textContent = "Session terminée !";
+    wordEl.textContent = "Bravo !";
+    wordEl.classList.remove("pop");
+    void wordEl.offsetWidth;
+    wordEl.classList.add("pop");
+    msgEl.textContent = "Tu as recopié les " + session.length + " mots. Choisis une leçon ou clique sur « Nouvelle session ».";
+    msgEl.className = "msg ok";
+    launchConfetti();
+  }
+
+  corgi.addEventListener("click", success);
+  corgi.addEventListener("keydown", function(evt){
+    if (evt.key === "Enter" || evt.key === " "){
+      evt.preventDefault();
+      success();
+    }
+  });
+
+  /* ---------- corgi ---------- */
+  function corgiHop(){
+    corgi.classList.remove("hop");
+    void corgi.offsetWidth;
+    corgi.classList.add("hop");
+  }
+  function showSpeech(text){
+    speech.textContent = text;
+    speech.classList.add("show");
+    setTimeout(function(){ speech.classList.remove("show"); }, 1700);
+  }
+
+  /* ---------- confettis ---------- */
+  var canvas = document.getElementById("confetti");
+  var ctx = canvas.getContext("2d");
+  var parts = [];
+  var raf = null;
+  var COLORS = ["#ff5c8a", "#ffd23f", "#4ade80", "#5aa9ff", "#f97316", "#a855f7", "#ffffff"];
+
+  function sizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+
+  function launchConfetti(){
+    for (var i = 0; i < 170; i++){
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        w: 6 + Math.random() * 8,
+        h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function tick(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.03;
+      p.vx *= 0.995;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      if (p.y > canvas.height + 50) parts.splice(i, 1);
+    }
+    if (parts.length){
+      raf = requestAnimationFrame(tick);
+    } else {
+      raf = null;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  /* ---------- init ---------- */
+  window.launchConfetti = launchConfetti;
+  loadWords();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- données des dictées ----------
+     "3 – Les lettres finales muettes – Présentation de la classe"
+     Clé = jour de révision, puis niveau d'étoiles -> phrase. */
+  var DATA = {
+    1: {
+      1: "Cette année, Tao est le plus grand de la classe.",
+      2: "Maintenant, il y a beaucoup d’enfants dans la classe.",
+      4: "Il faut respecter les règles de la classe."
+    },
+    2: {
+      1: "Cette année, Lila est la plus petite des enfants.",
+      2: "Les élèves sont toujours contents de se retrouver.",
+      4: "Il faut respecter les règles."
+    },
+    3: {
+      1: "A l’école, il y a des petits et des grands enfants.",
+      2: "Maintenant, les élèves vont découvrir la nouvelle classe.",
+      4: "Il y a des règles sur le temps de classe."
+    },
+    4: {
+      1: "Dans la classe, Tao est le plus grand et Lila est la plus petite.",
+      2: "A l’école, les élèves sont toujours contents de se retrouver.",
+      3: "Maintenant, beaucoup d’enfants sont grands.",
+      4: "Pendant le temps de la classe, il faut respecter les règles."
+    }
+  };
+
+  var day = 1;
+  var stars = 1;
+
+  var dayBtns = document.getElementById("dayBtns");
+  var starBtns = document.getElementById("starBtns");
+  var dictInfo = document.getElementById("dictInfo");
+  var dictList = document.getElementById("dictList");
+  var msgD = document.getElementById("msgD");
+  var corgiD = document.getElementById("corgiD");
+  var speechD = document.getElementById("speechD");
+
+  /* ---------- sélection ---------- */
+  function phrasesFor(d, maxStars){
+    var out = [];
+    var jour = DATA[d] || {};
+    for (var s = 1; s <= maxStars; s++){
+      if (jour[s]) out.push({ stars: s, text: jour[s] });
+    }
+    return out;
+  }
+
+  function starStr(n){
+    var t = "";
+    for (var i = 0; i < n; i++) t += "★";
+    return t;
+  }
+
+  function escapeHtml(t){
+    return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function buildControls(){
+    for (var d = 1; d <= 4; d++){
+      (function(j){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = "Jour " + j;
+        b.addEventListener("click", function(){ day = j; syncButtons(); render(); });
+        dayBtns.appendChild(b);
+      })(d);
+    }
+    for (var s = 1; s <= 4; s++){
+      (function(n){
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = starStr(n);
+        b.title = n + " étoile" + (n > 1 ? "s" : "");
+        b.addEventListener("click", function(){ stars = n; syncButtons(); render(); });
+        starBtns.appendChild(b);
+      })(s);
+    }
+  }
+
+  function syncButtons(){
+    var db = dayBtns.querySelectorAll("button");
+    for (var i = 0; i < db.length; i++) db[i].classList.toggle("active", (i + 1) === day);
+    var sb = starBtns.querySelectorAll("button");
+    for (var j = 0; j < sb.length; j++) sb[j].classList.toggle("active", (j + 1) === stars);
+  }
+
+  function render(){
+    var list = phrasesFor(day, stars);
+    dictInfo.innerHTML = "Jour " + day + " — niveau " + starStr(stars) +
+      " : <b>" + list.length + "</b> phrase" + (list.length > 1 ? "s" : "") + " à écrire.";
+
+    dictList.innerHTML = "";
+    list.forEach(function(item, i){
+      var card = document.createElement("div");
+      card.className = "dicard";
+      card.innerHTML =
+        '<div class="dicard-head">' +
+          '<span class="dicard-num">' + (i + 1) + '</span>' +
+          '<span class="dicard-stars">' + starStr(item.stars) + '</span>' +
+          '<span class="dicard-actions">' +
+            '<button type="button" class="mini" data-act="listen" data-i="' + i + '">▶ Écouter</button>' +
+            '<button type="button" class="mini" data-act="toggle" data-i="' + i + '">Voir</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="dicard-text hidden-text" data-text="' + i + '">' + escapeHtml(item.text) + '</div>';
+      dictList.appendChild(card);
+    });
+
+    msgD.textContent = "";
+    msgD.className = "msg";
+  }
+
+  /* ---------- clics dans la liste ---------- */
+  dictList.addEventListener("click", function(evt){
+    var btn = evt.target.closest("button[data-act]");
+    if (!btn) return;
+    var i = parseInt(btn.getAttribute("data-i"), 10);
+    var list = phrasesFor(day, stars);
+    if (btn.getAttribute("data-act") === "listen"){
+      speak(list[i].text);
+    } else {
+      var text = dictList.querySelector('[data-text="' + i + '"]');
+      var hidden = text.classList.toggle("hidden-text");
+      text.classList.toggle("revealed", !hidden);
+      btn.textContent = hidden ? "Voir" : "Cacher";
+    }
+  });
+
+  document.getElementById("revealAll").addEventListener("click", function(){
+    var texts = dictList.querySelectorAll(".dicard-text");
+    for (var i = 0; i < texts.length; i++){
+      texts[i].classList.remove("hidden-text");
+      texts[i].classList.add("revealed");
+    }
+    var btns = dictList.querySelectorAll('button[data-act="toggle"]');
+    for (var j = 0; j < btns.length; j++) btns[j].textContent = "Cacher";
+    msgD.textContent = "Voici les corrections. Compare avec ton cahier !";
+    msgD.className = "msg ok";
+  });
+
+  document.getElementById("hideAll").addEventListener("click", function(){
+    var texts = dictList.querySelectorAll(".dicard-text");
+    for (var i = 0; i < texts.length; i++){
+      texts[i].classList.add("hidden-text");
+      texts[i].classList.remove("revealed");
+    }
+    var btns = dictList.querySelectorAll('button[data-act="toggle"]');
+    for (var j = 0; j < btns.length; j++) btns[j].textContent = "Voir";
+    msgD.textContent = "Essaie d'écrire la phrase de mémoire !";
+    msgD.className = "msg";
+  });
+
+  /* ---------- écoute de la dictée en entier ---------- */
+  var queue = [];
+  var queueIndex = 0;
+
+  document.getElementById("listenAll").addEventListener("click", function(){
+    queue = phrasesFor(day, stars).map(function(x){ return x.text; });
+    queueIndex = 0;
+    speakNext();
+  });
+
+  function speakNext(){
+    if (queueIndex >= queue.length) return;
+    speak(queue[queueIndex], function(){
+      queueIndex++;
+      setTimeout(speakNext, 700);
+    });
+  }
+
+  function speak(text, onEnd){
+    if (!("speechSynthesis" in window)) {
+      msgD.textContent = "La lecture vocale n'est pas disponible sur ce navigateur.";
+      msgD.className = "msg";
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "fr-FR";
+    u.rate = 0.9;
+    u.pitch = 1;
+    if (onEnd) u.onend = onEnd;
+    window.speechSynthesis.speak(u);
+  }
+
+  /* ---------- navigation entre les jours ---------- */
+  document.getElementById("nextDayD").addEventListener("click", function(){
+    day = (day % 4) + 1;
+    syncButtons(); render();
+  });
+  document.getElementById("prevDayD").addEventListener("click", function(){
+    day = ((day + 2) % 4) + 1;
+    syncButtons(); render();
+  });
+
+  /* ---------- auto-évaluation : son + confettis + corgi ---------- */
+  function bravo(){
+    msgD.textContent = "Bravo, le corgi est content de toi !";
+    msgD.className = "msg ok";
+    if (window.playBravoSound) window.playBravoSound();
+    if (window.launchConfetti) window.launchConfetti();
+    corgiHop();
+    showSpeechD("Bravo !");
+  }
+
+  document.getElementById("goodD").addEventListener("click", bravo);
+
+  corgiD.addEventListener("click", bravo);
+  corgiD.addEventListener("keydown", function(evt){
+    if (evt.key === "Enter" || evt.key === " "){
+      evt.preventDefault();
+      bravo();
+    }
+  });
+
+  function corgiHop(){
+    if (!corgiD) return;
+    corgiD.classList.remove("hop");
+    void corgiD.offsetWidth;
+    corgiD.classList.add("hop");
+  }
+  function showSpeechD(text){
+    if (!speechD) return;
+    speechD.textContent = text;
+    speechD.classList.add("show");
+    setTimeout(function(){ speechD.classList.remove("show"); }, 1700);
+  }
+
+  /* ---------- bascule entre les modes ---------- */
+  var modeMots = document.getElementById("modeMots");
+  var modeDictee = document.getElementById("modeDictee");
+  var btnMots = document.getElementById("btnMots");
+  var btnDictee = document.getElementById("btnDictee");
+
+  function setMode(mode){
+    var isMots = mode === "mots";
+    modeMots.classList.toggle("hidden", !isMots);
+    modeDictee.classList.toggle("hidden", isMots);
+    btnMots.classList.toggle("active", isMots);
+    btnDictee.classList.toggle("active", !isMots);
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+  }
+
+  btnMots.addEventListener("click", function(){ setMode("mots"); });
+  btnDictee.addEventListener("click", function(){ setMode("dictee"); });
+
+  /* ---------- init ---------- */
+  buildControls();
+  syncButtons();
+  render();
+})();
+</script>
+</body>
+</html>

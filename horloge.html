@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quelle heure est-il ? — apprendre l'heure</title>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel2:#f7f7f9;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --on:#ff9500;
+    --on-glow:#ffb340;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --carry:#ff375f;
+    --blue:#0071e3;
+    --blue-dark:#0060c0;
+    --wood:#b5793f;
+    --corgi:#e8983f;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff5c8a' fill-opacity='0.10' d='M12 21s-8-5.2-8-11c0-3.3 2.5-5.5 5.5-5.5 1.7 0 3.2 1 4 2.5.8-1.5 2.3-2.5 4-2.5 3 0 5.5 2.2 5.5 5.5 0 5.8-8 11-8 11z'/%3E%3C/svg%3E");
+    background-repeat:repeat;
+    background-attachment:fixed;
+    padding:26px 16px 50px;
+  }
+  h1{
+    text-align:center;
+    font-size:clamp(1.5rem,3.2vw,2.2rem);
+    font-weight:700;
+    margin:0 0 8px;
+    letter-spacing:-.3px;
+  }
+  .sub{
+    text-align:center;
+    color:var(--muted);
+    max-width:720px;
+    margin:0 auto 24px;
+    line-height:1.55;
+    font-size:.98rem;
+  }
+  .sub b{color:var(--txt)}
+
+  .game{
+    max-width:1040px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(300px,460px) 1fr;
+    gap:24px;
+    align-items:start;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:20px 22px 24px;
+    box-shadow:0 10px 40px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  /* ---- horloge ---- */
+  .clock-wrap{display:flex;justify-content:center}
+  .clock{width:100%;max-width:460px;height:auto;display:block;touch-action:none;user-select:none}
+  .hand{cursor:grab}
+  .hand:active{cursor:grabbing}
+  .hit{pointer-events:stroke}
+
+  /* ---- panneau ---- */
+  .panel{display:flex;flex-direction:column;gap:16px}
+  .score{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    font-size:1.1rem;font-weight:600;
+  }
+  .score b{font-size:1.5rem;color:var(--on)}
+  .target{
+    text-align:center;
+    padding:16px 14px;
+    border-radius:18px;
+    background:var(--panel2);
+    border:1px solid var(--line);
+  }
+  .target .q{color:var(--muted);font-size:.85rem;margin-bottom:6px}
+  .target .time{
+    font-size:clamp(1.8rem,5vw,2.6rem);
+    font-weight:700;color:var(--blue);
+    letter-spacing:0;
+  }
+
+  .corgi-zone{position:relative;display:flex;justify-content:center;min-height:215px;align-items:flex-end}
+  .corgi-wrap{transform-origin:50% 100%}
+  .corgi-wrap.hop{animation:hop .75s ease}
+  .corgi-svg{width:180px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
+  .corgi-img{display:none;width:245px;height:245px;object-fit:contain;animation:bob 2.8s ease-in-out infinite}
+  .corgi-wrap.has-img .corgi-img{display:block}
+  .corgi-wrap.has-img .corgi-svg{display:none}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes hop{
+    0%{transform:translateY(0) rotate(0)}
+    22%{transform:translateY(-46px) rotate(-5deg) scale(1.04)}
+    45%{transform:translateY(0) rotate(2deg)}
+    62%{transform:translateY(-24px) rotate(-3deg)}
+    82%{transform:translateY(0) rotate(1deg)}
+    100%{transform:translateY(0) rotate(0)}
+  }
+  .speech{
+    position:absolute;top:0;left:50%;transform:translateX(-40%) scale(.6);
+    background:#ffffff;color:var(--txt);font-weight:600;font-size:1rem;
+    padding:8px 14px;border-radius:14px;border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(0,0,0,.14);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    white-space:nowrap;
+  }
+  .speech::after{
+    content:"";position:absolute;left:22px;bottom:-8px;
+    border:8px solid transparent;border-top-color:#ffffff;border-bottom:0;
+  }
+  .speech.show{opacity:1;transform:translateX(-40%) scale(1)}
+
+  .msg{
+    text-align:center;font-weight:600;min-height:26px;line-height:1.4;
+    color:var(--muted);transition:color .15s;
+  }
+  .msg.ok{color:var(--ok-text)}
+  .msg.no{color:var(--carry)}
+
+  .buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{
+    font:inherit;font-weight:600;
+    padding:11px 20px;border-radius:12px;cursor:pointer;
+    color:var(--txt);background:#f2f2f7;
+    border:1px solid transparent;transition:background .15s,transform .12s,box-shadow .15s;
+  }
+  button:hover{background:#e8e8ed}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--blue);color:#fff;font-size:1.02rem;padding:12px 26px;box-shadow:0 4px 14px rgba(0,113,227,.3)}
+  button.primary:hover{background:var(--blue-dark)}
+  button:disabled{opacity:.5;cursor:default;transform:none}
+
+  .clock.shake{animation:shake .4s ease}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-9px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(4px)}
+  }
+
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+  /* ---- niveaux et coupes ---- */
+  .hud{
+    background:var(--panel2);
+    border:1px solid var(--line);border-radius:16px;
+    padding:12px 14px;display:flex;flex-direction:column;gap:10px;
+  }
+  .hud-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+  .badge{
+    background:var(--blue);color:#fff;
+    border-radius:999px;padding:4px 15px;font-weight:600;font-size:.92rem;
+    box-shadow:0 3px 10px rgba(0,113,227,.3);
+  }
+  .hud-desc{color:var(--muted);font-size:.85rem;font-weight:500}
+  .trophies{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .cup{width:30px;height:30px;opacity:.4;transform:scale(.9);transition:opacity .3s,transform .3s}
+  .cup svg{width:100%;height:100%;display:block}
+  .cup svg path,.cup svg rect{fill:#d8d8dd;stroke:#bcbcc4;stroke-width:1.2}
+  .cup svg path.handle{fill:none}
+  .cup.earned{opacity:1;transform:scale(1);filter:drop-shadow(0 2px 5px rgba(255,149,0,.5))}
+  .cup.earned svg path,.cup.earned svg rect{fill:#ffcc00;stroke:#e0a800}
+  .cup.pop{animation:cupPop .55s ease}
+  @keyframes cupPop{0%{transform:scale(.4) rotate(-12deg)}60%{transform:scale(1.3) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+  .progress{position:relative;height:17px;border-radius:999px;background:#e8e8ed;border:1px solid var(--line);overflow:hidden}
+  .progress i{position:absolute;top:0;left:0;bottom:0;width:0%;background:linear-gradient(90deg,#34c759,#ff9500);transition:width .35s ease}
+  .progress span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#1d1d1f}
+
+  .levelup{
+    position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    opacity:0;visibility:hidden;transition:opacity .3s;
+  }
+  .levelup.show{opacity:1;visibility:visible}
+  .levelup-card{
+    text-align:center;background:#ffffff;
+    border:1px solid var(--line);border-radius:26px;padding:26px 36px;
+    box-shadow:0 24px 60px rgba(0,0,0,.18);transform:scale(.7);transition:transform .3s;
+  }
+  .levelup.show .levelup-card{transform:scale(1)}
+  .levelup-cup{width:92px;height:92px;margin:0 auto 12px;filter:drop-shadow(0 4px 12px rgba(255,149,0,.5))}
+  .levelup-cup svg{width:100%;height:100%;display:block}
+  .levelup-cup svg path,.levelup-cup svg rect{fill:#ffcc00;stroke:#e0a800;stroke-width:1}
+  .levelup-cup svg path.handle{fill:none}
+  .levelup-card h2{margin:0 0 6px;font-size:1.55rem;color:var(--on)}
+  .levelup-card p{margin:0;color:var(--txt);font-size:1rem}
+
+  .reset{margin-top:12px;font-size:.76rem;padding:6px 13px;opacity:.75}
+  footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:28px;line-height:1.7}
+  footer a{color:var(--blue);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
+  @media(max-width:760px){
+    .game{grid-template-columns:1fr}
+    .corgi-zone{min-height:190px}
+    .corgi-svg{width:150px}
+    .corgi-img{width:195px;height:195px}
+  }
+</style>
+</head>
+<body>
+
+  <h1>Quelle heure est-il ?</h1>
+  <p class="sub">
+    Regarde l'heure demandée, puis <b>attrape les aiguilles</b> pour la montrer sur l'horloge.
+    L'aiguille <b>longue</b> montre les minutes, la <b>courte</b> montre les heures.
+    Appuie ensuite sur <b>Vérifier</b> !
+  </p>
+
+  <div class="game">
+    <section class="card">
+      <div class="clock-wrap">
+        <svg class="clock" id="clock" viewBox="0 0 400 400" role="img" aria-label="Horloge à aiguilles">
+          <defs>
+            <radialGradient id="face" cx="50%" cy="38%" r="78%">
+              <stop offset="0%" stop-color="#fffef8"/>
+              <stop offset="100%" stop-color="#ffe6bd"/>
+            </radialGradient>
+          </defs>
+          <circle cx="200" cy="200" r="198" fill="var(--wood)"/>
+          <circle cx="200" cy="200" r="198" fill="none" stroke="#5e3a17" stroke-width="3"/>
+          <circle cx="200" cy="200" r="186" fill="url(#face)" stroke="#e8983f" stroke-width="5"/>
+          <g id="ticks"></g>
+          <g id="numbers"></g>
+          <g id="minuteLabels"></g>
+
+          <g id="hourHand" class="hand">
+            <line x1="200" y1="200" x2="200" y2="112" stroke="#2a63d6" stroke-width="15" stroke-linecap="round"/>
+            <line class="hit" x1="200" y1="200" x2="200" y2="112" stroke="transparent" stroke-width="44" stroke-linecap="round"/>
+          </g>
+          <g id="minuteHand" class="hand">
+            <line x1="200" y1="200" x2="200" y2="58" stroke="#2a63d6" stroke-width="10" stroke-linecap="round"/>
+            <line class="hit" x1="200" y1="200" x2="200" y2="58" stroke="transparent" stroke-width="42" stroke-linecap="round"/>
+          </g>
+          <circle cx="200" cy="200" r="14" fill="#4a2f12"/>
+          <circle cx="200" cy="200" r="6" fill="var(--on)"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hud">
+        <div class="hud-top">
+          <span class="badge" id="levelBadge">Niveau 1</span>
+          <span class="hud-desc" id="levelDesc">Heures entières</span>
+        </div>
+        <div class="trophies" id="trophies" aria-label="Coupes gagnées"></div>
+        <div class="progress"><i id="progFill"></i><span id="progText">0 / 5</span></div>
+      </div>
+
+      <div class="score">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.9 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" fill="#ffd23f"/></svg>
+        Points : <b id="score">0</b>
+      </div>
+
+      <div class="target">
+        <div class="q">Montre-moi cette heure :</div>
+        <div class="time" id="target">12 h 00</div>
+      </div>
+
+      <div class="corgi-zone">
+        <div class="speech" id="speech">Bravo !</div>
+        <div class="corgi-wrap" id="corgi">
+          <img class="corgi-img" src="corgi.svg" alt="Corgi"
+               onload="this.parentNode.classList.add('has-img')"
+               onerror="this.remove()">
+          <svg class="corgi-svg" viewBox="0 0 260 292" aria-label="Corgi">
+            <defs>
+              <clipPath id="headClip"><ellipse cx="130" cy="104" rx="66" ry="62"/></clipPath>
+            </defs>
+            <g stroke="#3a2a1e" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+              <!-- oreilles -->
+              <g>
+                <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
+                <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
+                <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
+              </g>
+              <g transform="translate(260,0) scale(-1,1)">
+                <path d="M50,106 Q54,50 60,16 Q64,2 80,18 Q108,50 140,100 Q112,92 96,96 Q66,100 50,106 Z" fill="#f5a63c"/>
+                <path d="M66,100 Q68,54 72,28 Q75,17 84,28 Q104,54 128,96 Q106,90 92,94 Q76,98 66,100 Z" fill="#fff6e6"/>
+                <path d="M86,56 q-6,-10 -13,-5 q-6,5 0,13 q5,7 12,11 q5,-6 6,-13 q1,-8 -5,-6 Z" fill="#f0693c" stroke="none"/>
+              </g>
+              <!-- corps -->
+              <rect x="64" y="150" width="132" height="112" rx="56" fill="#f5a63c"/>
+              <!-- tête -->
+              <ellipse cx="130" cy="104" rx="66" ry="62" fill="#f5a63c"/>
+              <!-- pelage clair du visage, découpé selon la tête -->
+              <g clip-path="url(#headClip)" stroke="none">
+                <path d="M130,40 C143,44 149,74 145,104 C141,126 137,136 130,136 C123,136 119,126 115,104 C111,74 117,44 130,40 Z" fill="#fff6e6"/>
+                <path d="M-20,118 Q130,154 280,118 L280,260 L-20,260 Z" fill="#fff6e6"/>
+              </g>
+              <ellipse cx="130" cy="104" rx="66" ry="62" fill="none"/>
+              <!-- taches claires au-dessus des yeux -->
+              <ellipse cx="98" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
+              <ellipse cx="162" cy="84" rx="7" ry="5" fill="#fff6e6" stroke="none"/>
+              <!-- yeux -->
+              <ellipse cx="100" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
+              <ellipse cx="160" cy="104" rx="14" ry="16" fill="#241a12" stroke="none"/>
+              <circle cx="105" cy="98" r="4.6" fill="#fff" stroke="none"/>
+              <circle cx="97" cy="110" r="2.6" fill="#fff" stroke="none"/>
+              <circle cx="165" cy="98" r="4.6" fill="#fff" stroke="none"/>
+              <circle cx="157" cy="110" r="2.6" fill="#fff" stroke="none"/>
+              <!-- nez -->
+              <ellipse cx="130" cy="130" rx="12" ry="9" fill="#241a12" stroke="none"/>
+              <ellipse cx="126" cy="127" rx="3.4" ry="2.4" fill="#fff" opacity=".85" stroke="none"/>
+              <!-- bouche -->
+              <path d="M130,139 V144" stroke="#241a12" stroke-width="3.5" fill="none"/>
+              <path d="M130,144 q-11,12 -22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
+              <path d="M130,144 q11,12 22,2" stroke="#241a12" stroke-width="3.5" fill="none"/>
+              <!-- cœur -->
+              <path d="M130,260 C98,232 52,206 52,168 C52,146 74,134 94,139 C111,143 123,157 130,171 C137,157 149,143 166,139 C186,134 208,146 208,168 C208,206 162,232 130,260 Z" fill="#ed2f2f"/>
+              <!-- pattes avant -->
+              <g>
+                <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
+                <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+                <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+              </g>
+              <g transform="translate(260,0) scale(-1,1)">
+                <ellipse cx="58" cy="190" rx="25" ry="23" fill="#fff6e6"/>
+                <path d="M50,170 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+                <path d="M62,169 l0,-9" stroke="#3a2a1e" stroke-width="4" fill="none"/>
+              </g>
+              <!-- pieds -->
+              <g>
+                <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
+                <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
+                <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+                <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+                <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              </g>
+              <g transform="translate(260,0) scale(-1,1)">
+                <ellipse cx="97" cy="258" rx="36" ry="26" fill="#fff6e6"/>
+                <ellipse cx="105" cy="266" rx="12" ry="9" fill="#f0693c" stroke="none"/>
+                <ellipse cx="86" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+                <ellipse cx="100" cy="243" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+                <ellipse cx="114" cy="247" rx="6" ry="7" fill="#f0693c" stroke="none"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <p class="msg" id="msg">Attrape les aiguilles et place-les sur la bonne heure.</p>
+
+      <div class="buttons">
+        <button type="button" class="primary" id="check">Vérifier</button>
+        <button type="button" id="newTime">Nouvelle heure</button>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Astuce : les minutes vont de 5 en 5, comme les grands chiffres autour de l'horloge.<br>
+    <button type="button" class="reset" id="reset">Recommencer depuis le début</button>
+  </footer>
+
+<div class="levelup" id="levelup" role="dialog" aria-live="polite">
+  <div class="levelup-card">
+    <div class="levelup-cup" id="levelupCup"></div>
+    <h2 id="levelupTitle">Niveau réussi !</h2>
+    <p id="levelupText">Tu gagnes une coupe !</p>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var CENTER = 200;
+  var svg = document.getElementById("clock");
+  var hourHand = document.getElementById("hourHand");
+  var minuteHand = document.getElementById("minuteHand");
+  var scoreEl = document.getElementById("score");
+  var targetEl = document.getElementById("target");
+  var msgEl = document.getElementById("msg");
+  var corgi = document.getElementById("corgi");
+  var speech = document.getElementById("speech");
+  var checkBtn = document.getElementById("check");
+  var levelBadge = document.getElementById("levelBadge");
+  var levelDesc = document.getElementById("levelDesc");
+  var trophiesEl = document.getElementById("trophies");
+  var progFill = document.getElementById("progFill");
+  var progText = document.getElementById("progText");
+  var levelup = document.getElementById("levelup");
+  var levelupCup = document.getElementById("levelupCup");
+  var levelupTitle = document.getElementById("levelupTitle");
+  var levelupText = document.getElementById("levelupText");
+
+  var current = { h: 12, m: 0 };
+  var target = { h: 12, m: 0 };
+  var score = 0;
+  var dragging = null;
+  var locked = false;
+  var lastPointerAngle = 0;
+  var continuousMinutes = 0;
+  var dragStartHour = 12;
+
+  var ALL_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  var LEVELS = [
+    { title: "Apprenti",     desc: "Heures entières",       minutes: [0],                       need: 5 },
+    { title: "Demi-heure",   desc: "Et les demies (30)",    minutes: [0, 30],                   need: 5 },
+    { title: "Quart d'heure",desc: "Les quarts (15 et 45)", minutes: [0, 15, 30, 45],           need: 6 },
+    { title: "Expert",       desc: "Toutes les 5 minutes",  minutes: ALL_MINUTES,               need: 8 },
+    { title: "Champion",     desc: "Champion des minutes",  minutes: ALL_MINUTES,               need: 10 }
+  ];
+  var levelIndex = 0;
+  var levelCorrect = 0;
+  var SAVE_KEY = "horlogeProgres_v1";
+
+  function isChampion(){ return levelIndex >= LEVELS.length; }
+  function currentLevel(){ return LEVELS[Math.min(levelIndex, LEVELS.length - 1)]; }
+
+  function save(){
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        levelIndex: levelIndex, levelCorrect: levelCorrect, score: score
+      }));
+    } catch (e) {}
+  }
+  function load(){
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (typeof d.levelIndex === "number") levelIndex = Math.max(0, Math.min(d.levelIndex, LEVELS.length));
+      if (typeof d.levelCorrect === "number") levelCorrect = Math.max(0, d.levelCorrect);
+      if (typeof d.score === "number") score = Math.max(0, d.score);
+    } catch (e) {}
+  }
+
+  function cupSVG(){
+    return '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+      '<path d="M6 3h12v4.5a6 6 0 0 1-12 0z"/>' +
+      '<path class="handle" d="M6.4 4.4H4.2a2.1 2.1 0 0 0 0 4.2h2.2"/>' +
+      '<path class="handle" d="M17.6 4.4h2.2a2.1 2.1 0 0 1 0 4.2h-2.2"/>' +
+      '<rect x="10.4" y="12.6" width="3.2" height="4" rx="1"/>' +
+      '<rect x="7" y="17" width="10" height="3.2" rx="1.6"/>' +
+      '</svg>';
+  }
+
+  /* ---------- dessin du cadran ---------- */
+  function polar(r, deg){
+    var rad = (deg - 90) * Math.PI / 180;
+    return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
+  }
+
+  function buildFace(){
+    var ticks = document.getElementById("ticks");
+    for (var i = 0; i < 60; i++){
+      var deg = i * 6;
+      var major = (i % 5 === 0);
+      var p1 = polar(major ? 153 : 158, deg);
+      var p2 = polar(166, deg);
+      var line = document.createElementNS(SVG_NS, "line");
+      line.setAttribute("x1", p1.x);
+      line.setAttribute("y1", p1.y);
+      line.setAttribute("x2", p2.x);
+      line.setAttribute("y2", p2.y);
+      line.setAttribute("stroke", major ? "#b07a3a" : "#d8b98c");
+      line.setAttribute("stroke-width", major ? 3.2 : 1.4);
+      line.setAttribute("stroke-linecap", "round");
+      ticks.appendChild(line);
+    }
+
+    var numbers = document.getElementById("numbers");
+    for (var h = 1; h <= 12; h++){
+      var p = polar(120, h * 30);
+      var t = document.createElementNS(SVG_NS, "text");
+      t.setAttribute("x", p.x);
+      t.setAttribute("y", p.y + 11);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-size", "32");
+      t.setAttribute("font-weight", "800");
+      t.setAttribute("font-family", "Segoe UI, system-ui, sans-serif");
+      t.setAttribute("fill", "#3a2a12");
+      t.textContent = h;
+      numbers.appendChild(t);
+    }
+
+    var mins = document.getElementById("minuteLabels");
+    for (var k = 1; k <= 12; k++){
+      var p2b = polar(178, k * 30);
+      var mt = document.createElementNS(SVG_NS, "text");
+      mt.setAttribute("x", p2b.x);
+      mt.setAttribute("y", p2b.y + 5);
+      mt.setAttribute("text-anchor", "middle");
+      mt.setAttribute("font-size", "15");
+      mt.setAttribute("font-weight", "700");
+      mt.setAttribute("font-family", "Segoe UI, system-ui, sans-serif");
+      mt.setAttribute("fill", "#c96a55");
+      mt.textContent = (k === 12) ? "00" : (k * 5);
+      mins.appendChild(mt);
+    }
+  }
+
+  /* ---------- affichage ---------- */
+  function renderClock(){
+    var hourAngle = (current.h % 12) * 30 + current.m * 0.5;
+    var minAngle = current.m * 6;
+    hourHand.setAttribute("transform", "rotate(" + hourAngle + " " + CENTER + " " + CENTER + ")");
+    minuteHand.setAttribute("transform", "rotate(" + minAngle + " " + CENTER + " " + CENTER + ")");
+  }
+
+  function fmt(t){
+    return t.h + " h " + (t.m < 10 ? "0" : "") + t.m;
+  }
+
+  function newRound(){
+    var minutes = currentLevel().minutes;
+    var tries = 0;
+    do {
+      target.h = 1 + Math.floor(Math.random() * 12);
+      target.m = minutes[Math.floor(Math.random() * minutes.length)];
+      tries++;
+    } while (tries < 8 && target.h === current.h && target.m === current.m);
+
+    targetEl.textContent = fmt(target);
+    current.h = 12;
+    current.m = 0;
+    renderClock();
+    setMsg("Attrape les aiguilles et place-les sur la bonne heure.", "");
+    locked = false;
+    checkBtn.disabled = false;
+  }
+
+  function setMsg(text, cls){
+    msgEl.textContent = text;
+    msgEl.className = "msg" + (cls ? " " + cls : "");
+  }
+
+  /* ---------- niveaux, coupes, progression ---------- */
+  function updateHUD(popIndex){
+    if (isChampion()){
+      levelBadge.textContent = "Champion !";
+      levelDesc.textContent = "Tu as toutes les coupes";
+      progFill.style.width = "100%";
+      progText.textContent = "Terminé !";
+    } else {
+      var lvl = currentLevel();
+      levelBadge.textContent = "Niveau " + (levelIndex + 1);
+      levelDesc.textContent = lvl.desc;
+      progFill.style.width = Math.round(levelCorrect / lvl.need * 100) + "%";
+      progText.textContent = levelCorrect + " / " + lvl.need;
+    }
+
+    trophiesEl.innerHTML = "";
+    for (var i = 0; i < LEVELS.length; i++){
+      var c = document.createElement("div");
+      var earned = i < levelIndex;
+      c.className = "cup" + (earned ? " earned" : "") + (i === popIndex ? " pop" : "");
+      c.title = "Niveau " + (i + 1) + " — " + LEVELS[i].title;
+      c.innerHTML = cupSVG();
+      trophiesEl.appendChild(c);
+    }
+
+    scoreEl.textContent = score;
+  }
+
+  function showLevelUp(isFinal){
+    levelupCup.innerHTML = cupSVG();
+    levelupTitle.textContent = isFinal ? "Champion !" : "Niveau réussi !";
+    levelupText.textContent = isFinal ? "Tu as gagné toutes les coupes !" : "Tu gagnes une coupe !";
+    levelup.classList.add("show");
+    setTimeout(function(){ levelup.classList.remove("show"); }, 2100);
+  }
+
+  /* ---------- rotation des aiguilles ---------- */
+  var HOUR_LEN = 88;      // longueur (rayon) de l'aiguille des heures
+
+  function svgXY(evt){
+    var rect = svg.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left) / rect.width * 400,
+      y: (evt.clientY - rect.top) / rect.height * 400
+    };
+  }
+
+  function pointerAngle(evt){
+    var p = svgXY(evt);
+    var a = Math.atan2(p.x - CENTER, CENTER - p.y) * 180 / Math.PI;
+    return (a + 360) % 360;
+  }
+
+  // Les deux aiguilles pointent-elles dans la même direction ?
+  function handsAligned(){
+    var hourAngle = (current.h % 12) * 30 + current.m * 0.5;
+    var minAngle = current.m * 6;
+    var d = Math.abs(hourAngle - minAngle) % 360;
+    if (d > 180) d = 360 - d;
+    return d < 3;
+  }
+
+  function startDrag(kind, evt){
+    dragging = kind;
+    if (kind === "minute"){
+      lastPointerAngle = pointerAngle(evt);
+      continuousMinutes = current.m;
+      dragStartHour = current.h;
+    }
+    try { evt.target.setPointerCapture(evt.pointerId); } catch (e) {}
+  }
+
+  svg.addEventListener("pointerdown", function(evt){
+    if (locked) return;
+    var kind = null;
+
+    if (handsAligned()){
+      // Aiguilles superposées : intérieur = heures, extérieur = minutes.
+      var p = svgXY(evt);
+      var dx = p.x - CENTER, dy = p.y - CENTER;
+      var r = Math.sqrt(dx * dx + dy * dy);
+      kind = (r <= HOUR_LEN + 12) ? "hour" : "minute";
+    } else {
+      // Aiguilles séparées : on agit sur l'aiguille touchée, sur toute sa longueur.
+      var el = evt.target;
+      if (el && el.closest){
+        if (el.closest("#hourHand")) kind = "hour";
+        else if (el.closest("#minuteHand")) kind = "minute";
+      }
+    }
+
+    if (!kind) return;
+    evt.preventDefault();
+    startDrag(kind, evt);
+  });
+
+  svg.addEventListener("pointermove", function(evt){
+    if (!dragging) return;
+    evt.preventDefault();
+    var angle = pointerAngle(evt);
+
+    if (dragging === "minute"){
+      var delta = angle - lastPointerAngle;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      lastPointerAngle = angle;
+      continuousMinutes += delta / 6;
+
+      var snapped = Math.round(continuousMinutes / 5) * 5;
+      var turns = Math.floor(snapped / 60);
+      current.m = ((snapped % 60) + 60) % 60;
+      current.h = ((dragStartHour - 1 + turns) % 12 + 12) % 12 + 1;
+    } else {
+      var h = Math.round((angle - current.m * 0.5) / 30);
+      h = ((h % 12) + 12) % 12;
+      current.h = (h === 0) ? 12 : h;
+    }
+    renderClock();
+  });
+
+  function endDrag(){ dragging = null; }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  /* ---------- boutons ---------- */
+  document.getElementById("newTime").addEventListener("click", function(){ if (!locked) newRound(); });
+  document.getElementById("reset").addEventListener("click", function(){
+    levelIndex = 0;
+    levelCorrect = 0;
+    score = 0;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    updateHUD();
+    setMsg("On repart du niveau 1. Bonne chance !", "");
+    newRound();
+  });
+
+  /* ---------- validation ---------- */
+  document.getElementById("check").addEventListener("click", function(){
+    if (locked) return;
+    if (current.h === target.h && current.m === target.m){
+      success();
+    } else {
+      fail();
+    }
+  });
+
+  function success(){
+    locked = true;
+    score++;
+    levelCorrect++;
+    save();
+    updateHUD();
+    setMsg("Bravo ! C'est bien " + fmt(target) + ".", "ok");
+    launchConfetti();
+    corgiHop();
+    showSpeech("Bravo !");
+    checkBtn.disabled = true;
+
+    if (!isChampion() && levelCorrect >= currentLevel().need){
+      setTimeout(completeLevel, 950);
+    } else {
+      setTimeout(newRound, 1600);
+    }
+  }
+
+  function completeLevel(){
+    var wonIndex = levelIndex;
+    levelIndex++;
+    levelCorrect = 0;
+    score += 5;
+    save();
+
+    var isFinal = isChampion();
+    updateHUD(wonIndex);
+
+    launchConfetti();
+    setTimeout(launchConfetti, 300);
+    corgiHop();
+    showLevelUp(isFinal);
+    setMsg(isFinal ? "Incroyable, tu es champion !" : "Niveau réussi, tu gagnes une coupe !", "ok");
+
+    setTimeout(function(){
+      if (isFinal){
+        setMsg("Tu connais toutes les heures ! Continue à t'entraîner.", "ok");
+      } else {
+        setMsg("Niveau " + (levelIndex + 1) + " : " + currentLevel().desc + ".", "");
+      }
+      newRound();
+    }, 2400);
+  }
+
+  function fail(){
+    var wrongMin = current.m !== target.m;
+    var wrongHour = current.h !== target.h;
+    var hint;
+    if (wrongMin && wrongHour){
+      hint = "Regarde les deux aiguilles : la longue (minutes) et la courte (heures).";
+    } else if (wrongMin){
+      hint = "L'aiguille longue (minutes) n'est pas au bon endroit.";
+    } else {
+      hint = "L'aiguille courte (heures) n'est pas au bon endroit.";
+    }
+    setMsg(hint + " Essaie encore !", "no");
+    svg.classList.remove("shake");
+    void svg.offsetWidth;
+    svg.classList.add("shake");
+  }
+
+  /* ---------- corgi ---------- */
+  function corgiHop(){
+    corgi.classList.remove("hop");
+    void corgi.offsetWidth;
+    corgi.classList.add("hop");
+  }
+  function showSpeech(text){
+    speech.textContent = text;
+    speech.classList.add("show");
+    setTimeout(function(){ speech.classList.remove("show"); }, 1700);
+  }
+
+  /* ---------- confettis ---------- */
+  var canvas = document.getElementById("confetti");
+  var ctx = canvas.getContext("2d");
+  var parts = [];
+  var raf = null;
+  var COLORS = ["#ff5c8a", "#ffd23f", "#4ade80", "#5aa9ff", "#f97316", "#a855f7", "#ffffff"];
+
+  function sizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+
+  function launchConfetti(){
+    for (var i = 0; i < 170; i++){
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        w: 6 + Math.random() * 8,
+        h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  function tick(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.03;
+      p.vx *= 0.995;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      if (p.y > canvas.height + 50) parts.splice(i, 1);
+    }
+    if (parts.length){
+      raf = requestAnimationFrame(tick);
+    } else {
+      raf = null;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  /* ---------- init ---------- */
+  load();
+  buildFace();
+  renderClock();
+  updateHUD();
+  newRound();
+})();
+</script>
+</body>
+</html>
