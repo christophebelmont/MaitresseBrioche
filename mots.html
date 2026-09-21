@@ -100,11 +100,39 @@
   }
 
   .progress-lbl{color:var(--txt);font-size:1.35rem;font-weight:700;letter-spacing:-.5px}
-  .check-row{
-    display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
-    font-size:.9rem;font-weight:500;color:var(--muted);
+  .mix-toggle{
+    display:inline-flex;align-items:center;gap:12px;
+    margin-top:10px;padding:11px 18px 11px 12px;border-radius:980px;
+    background:#fff;border:2px solid var(--line);cursor:pointer;user-select:none;
+    font-size:1rem;font-weight:600;color:var(--txt);
+    box-shadow:0 4px 14px rgba(0,0,0,.06);
+    transition:border-color .15s,box-shadow .15s,transform .12s;
   }
-  .check-row input{width:20px;height:20px;accent-color:var(--blue);cursor:pointer}
+  .mix-toggle:hover{border-color:var(--on-glow);box-shadow:0 6px 18px rgba(255,149,0,.18)}
+  .mix-toggle:active{transform:scale(.99)}
+  .mix-toggle input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+  .mix-toggle-box{
+    width:38px;height:38px;flex:none;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    background:#f2f2f7;border:2px solid var(--line);
+    transition:background .18s,border-color .18s,transform .18s;
+  }
+  .mix-toggle-box svg{
+    width:24px;height:24px;fill:none;stroke:#bcbcc4;stroke-width:2.2;
+    stroke-linejoin:round;stroke-linecap:round;transition:fill .18s,stroke .18s;
+  }
+  .mix-toggle input:checked ~ .mix-toggle-box{
+    background:#fff3d6;border-color:var(--on);transform:rotate(-4deg) scale(1.06);
+    animation:starPop .38s ease;
+  }
+  .mix-toggle input:checked ~ .mix-toggle-box svg{fill:#ffc233;stroke:#ff9500}
+  .mix-toggle input:checked ~ .mix-toggle-txt{color:#c86a00}
+  .mix-toggle input:focus-visible ~ .mix-toggle-box{outline:3px solid var(--blue);outline-offset:3px}
+  @keyframes starPop{
+    0%{transform:scale(.6) rotate(-18deg)}
+    60%{transform:scale(1.2) rotate(10deg)}
+    100%{transform:rotate(-4deg) scale(1.06)}
+  }
 
   /* ---- corgi ---- */
   .corgi-zone{position:relative;display:flex;justify-content:center;min-height:195px;align-items:flex-end;width:100%}
@@ -241,6 +269,13 @@
   <div class="dict-picker">
     <span class="ctrl-lbl">Choisis ta dictée</span>
     <select class="dict-select" id="dictSelect" aria-label="Choix de la dictée"></select>
+    <label class="mix-toggle">
+      <input type="checkbox" id="mixPrev">
+      <span class="mix-toggle-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.9 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+      </span>
+      <span class="mix-toggle-txt">10 mots dans toutes les dictées jusqu'à celle-ci</span>
+    </label>
   </div>
 
   <nav class="mode-switch" aria-label="Choix du mode">
@@ -257,11 +292,6 @@
     </div>
 
     <div class="progress-lbl" id="progress">Mot 1</div>
-
-    <label class="check-row">
-      <input type="checkbox" id="mixPrev">
-      <span>10 mots dans toutes les dictées jusqu'à celle-ci</span>
-    </label>
 
     <div class="corgi-zone">
       <div class="speech" id="speech">Bravo !</div>
