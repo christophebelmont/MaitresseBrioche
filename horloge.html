@@ -469,10 +469,10 @@
     { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:10 },
     { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:10 },
     { type:"read", title:"Lis l'heure",         desc:"Sans les petits repères",                need:10, hideMin:true },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:10 },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:10 },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée (ça change d'heure)",   need:10 },
-    { type:"sub",  title:"Calcul de départ",    desc:"Retire une durée",                       need:10 }
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée, place le résultat",   need:10, byHand:true },
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée, place le résultat",   need:10, byHand:true },
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée (ça change d'heure)",  need:10, byHand:true },
+    { type:"sub",  title:"Calcul de départ",    desc:"Retire une durée, place le résultat",   need:10, byHand:true }
   ];
 
   var STUDENT_NAME = "Clara";
@@ -498,6 +498,8 @@
 
   function isChampion(){ return completed.every(function(v){ return v; }); }
   function currentLevel(){ return LEVELS[Math.min(levelIndex, LEVELS.length - 1)]; }
+  function handLevel(){ var l = currentLevel(); return l.type === "set" || !!l.byHand; }
+  function keypadLevel(){ var l = currentLevel(); return !handLevel(); }
   function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
   function pad2(n){ return (n < 10 ? "0" : "") + n; }
   function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
@@ -678,7 +680,7 @@
   }
 
   answerEl.addEventListener("click", function(){
-    if (busy || currentLevel().type === "set") return;
+    if (busy || handLevel()) return;
     openKeypad();
   });
 
@@ -691,7 +693,7 @@
   document.addEventListener("keydown", function(evt){
     if (busy) return;
     if (evt.key === "Enter"){ evt.preventDefault(); checkCurrent(); return; }
-    if (currentLevel().type === "set") return;
+    if (handLevel()) return;
     if (/^[0-9]$/.test(evt.key)){ openKeypad(); keypadInput(evt.key); }
     else if (evt.key === "Backspace"){ evt.preventDefault(); keypadInput("del"); }
   });
@@ -706,18 +708,19 @@
 
     var isSet = (type === "set");
     var isProblem = (type === "add" || type === "sub");
-    clockInteractive = isSet;
+    var handInput = handLevel();
+    clockInteractive = handInput;
     busy = false;
     keypadOpen = false;
     keypad.hidden = true;
     renderAnswer();
     cardTime.hidden = !isSet;
     cardProblem.hidden = !isProblem;
-    cardKeypad.hidden = isSet;
+    cardKeypad.hidden = !keypadLevel();
     checkBtn.style.display = "";
     checkBtn.disabled = false;
     newTimeBtn.disabled = false;
-    svg.classList.toggle("readonly", !isSet);
+    svg.classList.toggle("readonly", !handInput);
     minuteLabels.style.display = lvl.hideMin ? "none" : "";
 
     if (type === "set"){
@@ -765,8 +768,13 @@
       renderClock();
 
       taskProblem.textContent = show;
-      keypadTitle.textContent = "Écris ta réponse :";
-      setMsg("", "");
+      if (lvl.byHand){
+        keypadTitle.textContent = "Écris ta réponse :";
+        setMsg("Déplace les aiguilles pour montrer l'heure, puis valide.", "");
+      } else {
+        keypadTitle.textContent = "Écris ta réponse :";
+        setMsg("", "");
+      }
     }
   }
 
@@ -926,7 +934,7 @@
 
   function checkCurrent(){
     if (busy) return;
-    if (currentLevel().type === "set"){
+    if (handLevel()){
       if (current.h * 60 + current.m === expected.minutes) success();
       else fail();
     } else {
@@ -937,7 +945,7 @@
 
   function checkTyped(){
     if (busy) return;
-    if (currentLevel().type === "set") return;
+    if (handLevel()) return;
     var v = parseAnswer(answerStr);
     if (v === null){
       setMsg("Tape les chiffres, par exemple 742 pour 7 h 42.", "no");
@@ -1016,12 +1024,16 @@
 
   function fail(){
     var hint;
-    if (currentLevel().type === "set"){
-      var wrongMin = current.m !== expected.minutes % 60;
-      var wrongHour = current.h !== Math.floor(expected.minutes / 60);
-      if (wrongMin && wrongHour) hint = "Regarde bien les deux aiguilles : la longue (minutes) et la courte (heures).";
-      else if (wrongMin) hint = "L'aiguille longue (minutes) n'est pas au bon endroit.";
-      else hint = "L'aiguille courte (heures) n'est pas au bon endroit.";
+    if (handLevel()){
+      if (currentLevel().byHand){
+        hint = "Calcule bien la durée, puis place les aiguilles au bon endroit.";
+      } else {
+        var wrongMin = current.m !== expected.minutes % 60;
+        var wrongHour = current.h !== Math.floor(expected.minutes / 60);
+        if (wrongMin && wrongHour) hint = "Regarde bien les deux aiguilles : la longue (minutes) et la courte (heures).";
+        else if (wrongMin) hint = "L'aiguille longue (minutes) n'est pas au bon endroit.";
+        else hint = "L'aiguille courte (heures) n'est pas au bon endroit.";
+      }
       svg.classList.remove("shake");
       void svg.offsetWidth;
       svg.classList.add("shake");
