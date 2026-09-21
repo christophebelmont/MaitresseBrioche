@@ -77,6 +77,14 @@
 
   /* ---- panneau ---- */
   .panel{display:flex;flex-direction:column;gap:16px}
+  .student{
+    align-self:center;display:flex;align-items:center;gap:9px;
+    background:#fff0f7;border:1px solid #ffd0e6;border-radius:999px;
+    padding:4px 16px 4px 5px;box-shadow:0 3px 12px rgba(255,92,138,.18);
+  }
+  .student-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+  .student-avatar svg{width:100%;height:100%;display:block}
+  .student-name{font-weight:700;font-size:1.05rem;color:#c2185b}
   .score{
     display:flex;align-items:center;justify-content:center;gap:10px;
     font-size:1.1rem;font-weight:600;
@@ -293,6 +301,25 @@
     </section>
 
     <section class="panel">
+      <div class="student">
+        <span class="student-avatar" aria-hidden="true">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="24" fill="#ffe3f0"/>
+            <circle cx="10" cy="30" r="6" fill="#7a4a24"/>
+            <circle cx="38" cy="30" r="6" fill="#7a4a24"/>
+            <path d="M10 26c-2-11 5-18 14-18s16 7 14 18c-1-5-3-8-5-9-2 3-5 4-9 4s-7-1-9-4c-2 1-4 4-5 9z" fill="#7a4a24"/>
+            <circle cx="24" cy="27" r="11.5" fill="#ffd9b8"/>
+            <path d="M13 27c0-9 5-13 11-13s11 4 11 13c-3-5-6-6.5-11-6.5S16 22 13 27z" fill="#7a4a24"/>
+            <circle cx="20" cy="27.5" r="1.7" fill="#4a2f1a"/>
+            <circle cx="28" cy="27.5" r="1.7" fill="#4a2f1a"/>
+            <circle cx="17.5" cy="31" r="2" fill="#ffb3c6" opacity=".8"/>
+            <circle cx="30.5" cy="31" r="2" fill="#ffb3c6" opacity=".8"/>
+            <path d="M20.5 32c1.3 1.8 5.7 1.8 7 0" stroke="#c2483f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="student-name" id="studentName">Clara</span>
+      </div>
+
       <div class="hud">
         <div class="hud-top">
           <span class="badge" id="levelBadge">Niveau 1 / 10</span>
@@ -300,7 +327,7 @@
         </div>
         <div class="trophies" id="trophies" aria-label="Choisir un niveau"></div>
         <div class="hud-hint">Clique sur une coupe pour choisir ton niveau</div>
-        <div class="progress"><i id="progFill"></i><span id="progText">0 / 4</span></div>
+        <div class="progress"><i id="progFill"></i><span id="progText">0 / 10</span></div>
       </div>
 
       <div class="score">
@@ -426,22 +453,28 @@
 
   /* ---------- 10 niveaux ---------- */
   var LEVELS = [
-    { type:"set",  title:"Place les aiguilles", desc:"Positionne les aiguilles (à la minute près)", need:4 },
-    { type:"set",  title:"Place les aiguilles", desc:"Encore des minutes précises",            need:4 },
-    { type:"set",  title:"Place les aiguilles", desc:"Sans les petits repères",                 need:5, hideMin:true },
-    { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:4 },
-    { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:4 },
-    { type:"read", title:"Lis l'heure",         desc:"Sans les petits repères",                need:5, hideMin:true },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:4 },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:4 },
-    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée (ça change d'heure)",   need:5 },
-    { type:"sub",  title:"Calcul de départ",    desc:"Retire une durée",                       need:5 }
+    { type:"set",  title:"Place les aiguilles", desc:"Positionne les aiguilles (à la minute près)", need:10 },
+    { type:"set",  title:"Place les aiguilles", desc:"Encore des minutes précises",            need:10 },
+    { type:"set",  title:"Place les aiguilles", desc:"Sans les petits repères",                 need:10, hideMin:true },
+    { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:10 },
+    { type:"read", title:"Lis l'heure",         desc:"Lis l'heure et tape-la au clavier",      need:10 },
+    { type:"read", title:"Lis l'heure",         desc:"Sans les petits repères",                need:10, hideMin:true },
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:10 },
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée",                       need:10 },
+    { type:"add",  title:"Calcul d'arrivée",    desc:"Ajoute une durée (ça change d'heure)",   need:10 },
+    { type:"sub",  title:"Calcul de départ",    desc:"Retire une durée",                       need:10 }
   ];
+
+  var STUDENT_NAME = "Clara";
 
   var levelIndex = 0;
   var levelCorrect = 0;
   var score = 0;
-  var SAVE_KEY = "horlogeProgres_v2";
+  var progress = [];        // bonnes réponses enregistrées pour chaque niveau
+  var completed = [];       // niveaux entièrement terminés (coupe en or)
+  var SAVE_KEY = "horlogeProgres_clara_v3";
+
+  for (var li = 0; li < LEVELS.length; li++){ progress[li] = 0; completed[li] = false; }
 
   var current = { h: 12, m: 15 };   // position initiale des aiguilles : 12 h 15
   var expected = { minutes: 735, label: "12 h 15" };
@@ -453,7 +486,7 @@
   var continuousMinutes = 0;
   var dragStartHour = 12;
 
-  function isChampion(){ return levelIndex >= LEVELS.length; }
+  function isChampion(){ return completed.every(function(v){ return v; }); }
   function currentLevel(){ return LEVELS[Math.min(levelIndex, LEVELS.length - 1)]; }
   function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
   function pad2(n){ return (n < 10 ? "0" : "") + n; }
@@ -469,7 +502,11 @@
   function save(){
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        levelIndex: levelIndex, levelCorrect: levelCorrect, score: score
+        name: STUDENT_NAME,
+        levelIndex: levelIndex,
+        score: score,
+        progress: progress,
+        completed: completed
       }));
     } catch (e) {}
   }
@@ -478,9 +515,17 @@
       var raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       var d = JSON.parse(raw);
-      if (typeof d.levelIndex === "number") levelIndex = Math.max(0, Math.min(d.levelIndex, LEVELS.length));
-      if (typeof d.levelCorrect === "number") levelCorrect = Math.max(0, d.levelCorrect);
+      if (typeof d.levelIndex === "number") levelIndex = Math.max(0, Math.min(d.levelIndex, LEVELS.length - 1));
       if (typeof d.score === "number") score = Math.max(0, d.score);
+      if (Array.isArray(d.progress)){
+        for (var i = 0; i < LEVELS.length; i++){
+          if (typeof d.progress[i] === "number") progress[i] = Math.max(0, Math.min(d.progress[i], LEVELS[i].need));
+        }
+      }
+      if (Array.isArray(d.completed)){
+        for (var j = 0; j < LEVELS.length; j++) completed[j] = !!d.completed[j];
+      }
+      levelCorrect = progress[levelIndex] || 0;
     } catch (e) {}
   }
 
@@ -734,7 +779,7 @@
     for (var i = 0; i < LEVELS.length; i++){
       var c = document.createElement("button");
       c.type = "button";
-      var earned = i < levelIndex;
+      var earned = completed[i];
       var isCurrent = i === levelIndex && !isChampion();
       c.className = "cup" + (earned ? " earned" : "") + (isCurrent ? " current" : "") + (i === popIndex ? " pop" : "");
       c.title = "Niveau " + (i + 1) + " — " + LEVELS[i].title;
@@ -750,7 +795,7 @@
   function selectLevel(i){
     if (busy || i < 0 || i >= LEVELS.length) return;
     levelIndex = i;
-    levelCorrect = 0;
+    levelCorrect = progress[i] || 0;
     save();
     updateHUD();
     newExercise();
@@ -862,6 +907,7 @@
     levelIndex = 0;
     levelCorrect = 0;
     score = 0;
+    for (var i = 0; i < LEVELS.length; i++){ progress[i] = 0; completed[i] = false; }
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     updateHUD();
     setMsg("On repart du niveau 1. Bonne chance !", "");
@@ -900,7 +946,11 @@
     busy = true;
     if (!keypad.hidden) hideKeypad();
     score++;
-    levelCorrect++;
+    if (!completed[levelIndex]){
+      levelCorrect++;
+      if (levelCorrect > currentLevel().need) levelCorrect = currentLevel().need;
+      progress[levelIndex] = levelCorrect;
+    }
     save();
     updateHUD();
     setMsg("Bravo ! C'est bien " + expected.label + ".", "ok");
@@ -911,7 +961,7 @@
     checkBtn.disabled = true;
     newTimeBtn.disabled = true;
 
-    if (!isChampion() && levelCorrect >= currentLevel().need){
+    if (!completed[levelIndex] && levelCorrect >= currentLevel().need){
       setTimeout(completeLevel, 950);
     } else {
       setTimeout(newExercise, 1700);
@@ -920,9 +970,15 @@
 
   function completeLevel(){
     var wonIndex = levelIndex;
-    levelIndex++;
-    levelCorrect = 0;
+    completed[wonIndex] = true;
+    progress[wonIndex] = LEVELS[wonIndex].need;
+    levelCorrect = LEVELS[wonIndex].need;
     score += 5;
+
+    if (wonIndex + 1 < LEVELS.length){
+      levelIndex = wonIndex + 1;
+      levelCorrect = progress[levelIndex] || 0;
+    }
     save();
 
     var isFinal = isChampion();
@@ -1035,9 +1091,11 @@
 
   /* ---------- init ---------- */
   load();
+  document.getElementById("studentName").textContent = STUDENT_NAME;
   buildFace();
   renderClock();
   updateHUD();
+  save();
   newExercise();
 })();
 </script>
