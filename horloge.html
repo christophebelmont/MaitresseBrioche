@@ -128,13 +128,12 @@
   }
   .keys button:active{transform:scale(.96)}
   .keys button.primary{background:var(--blue);color:#fff;border-color:transparent}
-  .keys button.wide{grid-column:1 / -1;font-size:1.05rem;padding:12px 0}
   .keys button[data-k="0"]{grid-column:2}
 
-  .corgi-zone{position:relative;display:flex;justify-content:center;min-height:215px;align-items:flex-end}
+  .corgi-zone{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:170px;margin:0 auto 6px}
   .corgi-wrap{transform-origin:50% 100%}
   .corgi-wrap.hop{animation:hop .75s ease}
-  .corgi-photo{width:225px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
+  .corgi-photo{width:150px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes hop{
     0%{transform:translateY(0) rotate(0)}
@@ -255,13 +254,20 @@
 
   @media(max-width:760px){
     .game{grid-template-columns:1fr}
-    .corgi-zone{min-height:190px}
-    .corgi-photo{width:170px}
+    .corgi-zone{min-height:140px}
+    .corgi-photo{width:120px}
     .keys{grid-template-columns:repeat(3,58px)}
   }
 </style>
 </head>
 <body>
+
+  <div class="corgi-zone">
+    <div class="speech" id="speech">Bravo !</div>
+    <div class="corgi-wrap" id="corgi">
+      <img class="corgi-photo" id="corgiImg" src="Content.png" alt="Corgi">
+    </div>
+  </div>
 
   <h1>Quelle heure est-il ?</h1>
   <p class="sub">
@@ -335,40 +341,40 @@
         Points : <b id="score">0</b>
       </div>
 
-      <div class="task">
-        <div class="task-title" id="taskTitle">Montre-moi cette heure :</div>
-        <div class="task-body" id="taskBody">12 h 15</div>
+      <div class="task" id="cardTime">
+        <div class="task-title">Montre-moi cette heure :</div>
+        <div class="task-body" id="taskTime">12 h 15</div>
       </div>
 
-      <div class="keypad" id="keypad" hidden>
-        <div class="answer" id="answer"><span class="ph">hh h mm</span></div>
-        <div class="keys" id="keys">
-          <button type="button" data-k="1">1</button>
-          <button type="button" data-k="2">2</button>
-          <button type="button" data-k="3">3</button>
-          <button type="button" data-k="4">4</button>
-          <button type="button" data-k="5">5</button>
-          <button type="button" data-k="6">6</button>
-          <button type="button" data-k="7">7</button>
-          <button type="button" data-k="8">8</button>
-          <button type="button" data-k="9">9</button>
-          <button type="button" data-k="0">0</button>
-          <button type="button" data-k="del">⌫</button>
-          <button type="button" data-k="ok" class="primary wide">Valider</button>
-        </div>
+      <div class="task" id="cardProblem" hidden>
+        <div class="task-title">Petit problème :</div>
+        <div class="task-body problem" id="taskProblem"></div>
       </div>
 
-      <div class="corgi-zone">
-        <div class="speech" id="speech">Bravo !</div>
-        <div class="corgi-wrap" id="corgi">
-          <img class="corgi-photo" id="corgiImg" src="Content.png" alt="Corgi">
+      <div class="task" id="cardKeypad" hidden>
+        <div class="task-title" id="keypadTitle">Quelle heure est-il ?</div>
+        <div class="keypad" id="keypad">
+          <div class="answer" id="answer"><span class="ph">hh h mm</span></div>
+          <div class="keys" id="keys">
+            <button type="button" data-k="1">1</button>
+            <button type="button" data-k="2">2</button>
+            <button type="button" data-k="3">3</button>
+            <button type="button" data-k="4">4</button>
+            <button type="button" data-k="5">5</button>
+            <button type="button" data-k="6">6</button>
+            <button type="button" data-k="7">7</button>
+            <button type="button" data-k="8">8</button>
+            <button type="button" data-k="9">9</button>
+            <button type="button" data-k="0">0</button>
+            <button type="button" data-k="del">⌫</button>
+          </div>
         </div>
       </div>
 
       <p class="msg" id="msg"></p>
 
       <div class="buttons">
-        <button type="button" class="primary" id="check">Vérifier</button>
+        <button type="button" class="primary" id="check">Valider</button>
         <button type="button" id="newTime">Passer</button>
       </div>
     </section>
@@ -406,8 +412,12 @@
   var minuteHand = document.getElementById("minuteHand");
   var minuteLabels = document.getElementById("minuteLabels");
   var scoreEl = document.getElementById("score");
-  var taskTitle = document.getElementById("taskTitle");
-  var taskBody = document.getElementById("taskBody");
+  var cardTime = document.getElementById("cardTime");
+  var taskTime = document.getElementById("taskTime");
+  var cardProblem = document.getElementById("cardProblem");
+  var taskProblem = document.getElementById("taskProblem");
+  var cardKeypad = document.getElementById("cardKeypad");
+  var keypadTitle = document.getElementById("keypadTitle");
   var keypad = document.getElementById("keypad");
   var keysEl = document.getElementById("keys");
   var answerEl = document.getElementById("answer");
@@ -679,10 +689,11 @@
   });
 
   document.addEventListener("keydown", function(evt){
-    if (busy || currentLevel().type === "set") return;
+    if (busy) return;
+    if (evt.key === "Enter"){ evt.preventDefault(); checkCurrent(); return; }
+    if (currentLevel().type === "set") return;
     if (/^[0-9]$/.test(evt.key)){ openKeypad(); keypadInput(evt.key); }
     else if (evt.key === "Backspace"){ evt.preventDefault(); keypadInput("del"); }
-    else if (evt.key === "Enter"){ evt.preventDefault(); keypadInput("ok"); }
   });
 
   /* ---------- exercices ---------- */
@@ -694,12 +705,16 @@
     setMsg("", "");
 
     var isSet = (type === "set");
+    var isProblem = (type === "add" || type === "sub");
     clockInteractive = isSet;
     busy = false;
     keypadOpen = false;
     keypad.hidden = true;
     renderAnswer();
-    checkBtn.style.display = isSet ? "" : "none";
+    cardTime.hidden = !isSet;
+    cardProblem.hidden = !isProblem;
+    cardKeypad.hidden = isSet;
+    checkBtn.style.display = "";
     checkBtn.disabled = false;
     newTimeBtn.disabled = false;
     svg.classList.toggle("readonly", !isSet);
@@ -717,9 +732,7 @@
       current.m = 15;
       renderClock();
 
-      taskTitle.textContent = "Montre-moi cette heure :";
-      taskBody.className = "task-body";
-      taskBody.textContent = expected.label;
+      taskTime.textContent = expected.label;
       setMsg("Attrape les aiguilles pour placer la bonne heure.", "");
     } else if (type === "read"){
       var hh = rndInt(1, 12), mm = rndInt(0, 59);
@@ -730,10 +743,8 @@
       current.m = mm;
       renderClock();
 
-      taskTitle.textContent = "Quelle heure est-il ?";
-      taskBody.className = "task-body problem";
-      taskBody.textContent = "Regarde l'horloge, puis tape les chiffres (ex. 742 pour 7 h 42) et valide.";
-      setMsg("", "");
+      keypadTitle.textContent = "Quelle heure est-il ?";
+      setMsg("Tape les chiffres (ex. 742 pour 7 h 42), puis valide.", "");
 
     } else {
       var start = rndInt(0, 23) * 60 + rndInt(0, 59);
@@ -753,9 +764,8 @@
       current.m = start % 60;
       renderClock();
 
-      taskTitle.textContent = "Petit problème :";
-      taskBody.className = "task-body problem";
-      taskBody.textContent = show;
+      taskProblem.textContent = show;
+      keypadTitle.textContent = "Écris ta réponse :";
       setMsg("", "");
     }
   }
@@ -919,6 +929,8 @@
     if (currentLevel().type === "set"){
       if (current.h * 60 + current.m === expected.minutes) success();
       else fail();
+    } else {
+      checkTyped();
     }
   }
   checkBtn.addEventListener("click", checkCurrent);
