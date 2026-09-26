@@ -84,18 +84,36 @@
     width:100%;
   }
   .ce1-calc{
-    display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+    display:flex;flex-direction:column;align-items:flex-end;gap:7px;
+    padding-top:1.15em;               /* place pour la retenue au-dessus */
     font-variant-numeric:tabular-nums;
   }
   .ce1-line{
-    display:flex;align-items:baseline;justify-content:flex-end;gap:12px;
-    font-size:clamp(1.9rem,5.4vw,2.7rem);font-weight:800;line-height:1.05;
+    display:flex;align-items:stretch;justify-content:flex-end;gap:12px;
+    font-size:clamp(1.9rem,5.4vw,2.7rem);font-weight:800;line-height:1;
   }
-  .ce1-line .op{color:var(--muted);font-size:.8em}
-  .ce1-line .num.blue{color:var(--blue)}
-  .ce1-line .num.red{color:var(--carry)}
-  .ce1-line .res{color:var(--ok-text);min-width:1.1em;text-align:center}
-  .ce1-line .res.q{color:var(--muted)}
+  .ce1-line .op{display:flex;align-items:center;color:var(--muted);font-size:.8em}
+
+  /* nombre = dizaines | unités, avec une fine séparation */
+  .num{display:inline-flex;align-items:stretch}
+  .num .slot{position:relative;display:flex;align-items:center;justify-content:center;min-width:.62em}
+  .num .sep{display:flex;justify-content:center;width:.5em}
+  .num .sep i{display:block;width:2px;border-radius:2px;background:#e3e3e9}
+  .num.blue .slot{color:var(--blue)}
+  .num.red .slot{color:var(--carry)}
+  .num.res .slot{color:var(--ok-text)}
+  .num.res.q .slot{color:var(--muted)}
+  .num.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+
+  .carry-badge{
+    position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
+    font-size:.44em;font-weight:800;color:#fff;line-height:1.8;
+    min-width:2.2em;padding:0 .26em;border-radius:999px;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.22);white-space:nowrap;
+  }
+  .carry-badge.plus{background:var(--on)}
+  .carry-badge.minus{background:var(--carry)}
+
   .ce1-rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
 
   .blocks50{display:flex;flex-direction:column;gap:14px}
@@ -264,7 +282,8 @@
 
   @media(max-width:680px){
     .ce1-layout{grid-template-columns:1fr;gap:20px}
-    .ce1-calc{align-items:center}
+    .ce1-calc{align-items:center;padding-top:1em}
+    .carry-badge{font-size:.5em}
     .blk{width:15px;height:15px;border-radius:4px}
     .five-block{gap:3px;padding:2px}
     .five-block + .five-block{margin-left:9px}
@@ -293,10 +312,10 @@
   <div class="stage">
     <div class="ce1-layout">
       <div class="ce1-calc" id="ce1Calc">
-        <div class="ce1-line"><span class="num blue" id="ce1NumA">…</span></div>
-        <div class="ce1-line"><span class="op" id="ce1Op">+</span><span class="num red" id="ce1NumB">…</span></div>
+        <div class="ce1-line"><span class="num blue" id="ce1NumA"></span></div>
+        <div class="ce1-line"><span class="op" id="ce1Op">+</span><span class="num red" id="ce1NumB"></span></div>
         <div class="ce1-rule"></div>
-        <div class="ce1-line"><span class="res q" id="ce1Res">?</span></div>
+        <div class="ce1-line"><span class="num res q" id="ce1Res"></span></div>
       </div>
       <div class="blocks50" id="ce1Fifty"></div>
     </div>
@@ -531,6 +550,24 @@
     return cls;
   }
 
+  /* rend un nombre en deux colonnes (dizaines | unités) séparées,
+     avec éventuellement un badge de retenue posé sur la colonne des dizaines */
+  function slotsHTML(n, badge){
+    var t = Math.floor(n / 10), u = n % 10;
+    var badgeHtml = badge ? '<span class="carry-badge ' + badge.cls + '">' + badge.txt + "</span>" : "";
+    return '<span class="slot tens">' + badgeHtml + (t > 0 ? t : "") + "</span>" +
+      '<span class="sep"><i></i></span>' +
+      '<span class="slot units">' + u + "</span>";
+  }
+
+  /* retenue : +1 en addition quand les unités dépassent 10,
+     −1 en soustraction quand on doit emprunter une dizaine */
+  function carryBadge(){
+    if (ce1.op === "+" && (ce1.a % 10) + (ce1.b % 10) >= 10) return { txt:"+1", cls:"plus" };
+    if (ce1.op === "−" && (ce1.a % 10) < (ce1.b % 10)) return { txt:"−1", cls:"minus" };
+    return null;
+  }
+
   function renderCE1Grid(reveal){
     var html = "", t, h, i, idx;
     for (t = 0; t < 5; t++){
@@ -550,15 +587,16 @@
     }
     ce1Fifty.innerHTML = html;
 
-    ce1NumA.textContent = ce1.a;
-    ce1NumB.textContent = ce1.b;
+    ce1NumA.innerHTML = slotsHTML(ce1.a, carryBadge());
+    ce1NumB.innerHTML = slotsHTML(ce1.b, null);
     ce1Op.textContent = ce1.op;
     if (reveal){
-      ce1Res.textContent = ce1.ans;
+      ce1Res.innerHTML = slotsHTML(ce1.ans, null);
       ce1Res.classList.remove("q");
       ce1Res.classList.remove("pop"); void ce1Res.offsetWidth; ce1Res.classList.add("pop");
     } else {
-      ce1Res.textContent = "?";
+      ce1Res.innerHTML = '<span class="slot tens"></span><span class="sep"><i></i></span>' +
+        '<span class="slot units">?</span>';
       ce1Res.classList.add("q");
       ce1Res.classList.remove("pop");
     }
@@ -585,9 +623,9 @@
     renderCE1Grid(false);
 
     if (ce1.op === "+"){
-      ce1Cap.textContent = "Bleu = 1er nombre, rouge = 2e. Paquet blanc = 5, ligne numérotée = 10.";
+      ce1Cap.textContent = "Bleu = 1er nombre, rouge = 2e. Paquet blanc = 5, ligne numérotée = 10. Le +1 entouré est la retenue.";
     } else {
-      ce1Cap.textContent = "Bleu = 1er nombre. On barre en rouge les " + ce1.b + " blocs du 2e.";
+      ce1Cap.textContent = "Bleu = 1er nombre ; on barre les " + ce1.b + " blocs du 2e. Le −1 entouré est la dizaine empruntée.";
     }
 
     ce1Keypad.reset();
