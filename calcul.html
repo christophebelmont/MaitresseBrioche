@@ -98,12 +98,27 @@
   .ce1-line .res.q{color:var(--muted)}
   .ce1-rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
 
-  .blocks50{display:flex;flex-direction:column;gap:16px}
+  .blocks50{display:flex;flex-direction:column;gap:14px}
   .ten-block{
-    display:flex;gap:14px;padding:6px;border-radius:12px;
+    display:flex;align-items:center;gap:10px;
+    padding:5px 10px 5px 6px;border-radius:12px;
     background:var(--panel2);border:1px solid var(--line);
   }
-  .five-block{display:flex;gap:4px}
+  .ten-tag{
+    font-size:.68rem;font-weight:800;color:var(--muted);
+    min-width:2em;text-align:right;letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums;
+  }
+  .fives{display:flex;flex:1;justify-content:flex-start}
+  .five-block{
+    display:flex;gap:4px;padding:3px;border-radius:8px;background:#fff;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .five-block + .five-block{position:relative;margin-left:12px}
+  .five-block + .five-block::before{
+    content:"";position:absolute;left:-7px;top:1px;bottom:1px;
+    border-left:2px dashed #d0d0d8;
+  }
   .blk{
     position:relative;width:20px;height:20px;border-radius:5px;
     background:#fff;border:2px solid #e2e2e8;box-sizing:border-box;
@@ -251,8 +266,11 @@
     .ce1-layout{grid-template-columns:1fr;gap:20px}
     .ce1-calc{align-items:center}
     .blk{width:15px;height:15px;border-radius:4px}
-    .five-block{gap:3px}
-    .ten-block{gap:10px;padding:4px;border-radius:9px}
+    .five-block{gap:3px;padding:2px}
+    .five-block + .five-block{margin-left:9px}
+    .five-block + .five-block::before{left:-5px}
+    .ten-block{gap:6px;padding:4px;border-radius:9px}
+    .ten-tag{font-size:.6rem;min-width:1.6em}
     .blocks50{gap:10px}
     .corgi-zone{min-height:140px}
     .corgi-photo{width:120px}
@@ -517,6 +535,8 @@
     var html = "", t, h, i, idx;
     for (t = 0; t < 5; t++){
       html += '<div class="ten-block">';
+      html += '<span class="ten-tag">' + ((t + 1) * 10) + "</span>";
+      html += '<div class="fives">';
       for (h = 0; h < 2; h++){
         html += '<div class="five-block">';
         for (i = 0; i < 5; i++){
@@ -525,6 +545,7 @@
         }
         html += "</div>";
       }
+      html += "</div>";
       html += "</div>";
     }
     ce1Fifty.innerHTML = html;
@@ -564,7 +585,7 @@
     renderCE1Grid(false);
 
     if (ce1.op === "+"){
-      ce1Cap.textContent = "Bleu = 1er nombre, rouge = 2e. Un paquet = 5, une ligne = 10.";
+      ce1Cap.textContent = "Bleu = 1er nombre, rouge = 2e. Paquet blanc = 5, ligne numérotée = 10.";
     } else {
       ce1Cap.textContent = "Bleu = 1er nombre. On barre en rouge les " + ce1.b + " blocs du 2e.";
     }
