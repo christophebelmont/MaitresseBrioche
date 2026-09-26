@@ -16,6 +16,8 @@
     --orange-bg:#fff3e6;
     --green:#34c759;
     --green-bg:#e9f9ee;
+    --purple:#af52de;
+    --purple-bg:#f4e9fd;
   }
   *{box-sizing:border-box}
   body{
@@ -75,6 +77,7 @@
   .card.horloge .icon{background:var(--blue-bg);color:var(--blue)}
   .card.addition .icon{background:var(--orange-bg);color:var(--orange)}
   .card.dictee .icon{background:var(--green-bg);color:var(--green)}
+  .card.calcul .icon{background:var(--purple-bg);color:var(--purple)}
 
   @media(max-width:520px){
     body{padding:40px 16px}
@@ -117,6 +120,17 @@
         </svg>
       </span>
       <span class="name">La révision de dictée</span>
+    </a>
+
+    <a class="card calcul" href="calcul.html">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="3" width="14" height="18" rx="3"/>
+          <path d="M8 7h8"/>
+          <path d="M9 12h.01M15 12h.01M9 16h.01M15 16h.01"/>
+        </svg>
+      </span>
+      <span class="name">Le calcul mental</span>
     </a>
 
   </nav>
