@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Le calcul mental de Clara</title>
+<title>Le calcul mental</title>
 <style>
   :root{
     --bg:#f5f5f7;
@@ -299,12 +299,12 @@
 </head>
 <body>
 
-  <h1>Le calcul mental de Clara</h1>
+  <h1>Le calcul mental</h1>
   <p class="sub" id="sub">Choisis ton niveau pour commencer.</p>
 
   <nav class="mode-switch" aria-label="Choix du niveau">
-    <button type="button" id="btnCE1" class="active">CE1</button>
-    <button type="button" id="btnCM2">CM2</button>
+    <button type="button" id="btnCE1" class="active">Clara</button>
+    <button type="button" id="btnCM2">Andrea</button>
   </nav>
 
 <!-- ===================== CE1 ===================== -->
@@ -868,8 +868,8 @@
     btnCE1.classList.toggle("active", isCE1);
     btnCM2.classList.toggle("active", !isCE1);
     sub.innerHTML = isCE1
-      ? "CE1 : de petites <b>additions</b> et <b>soustractions</b>, avec des barres de dizaines et des blocs d'unités pour bien voir."
-      : "CM2 : additions et soustractions, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
+      ? "Clara : de petites <b>additions</b> et <b>soustractions</b>, avec des barres de dizaines et des blocs d'unités pour bien voir."
+      : "Andrea : additions et soustractions, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "ce1" && !isCE1 && cm2.active && cm2.wasRunning){
