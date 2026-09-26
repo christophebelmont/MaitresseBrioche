@@ -75,52 +75,50 @@
     gap:18px;
   }
 
-  /* ---- CE1 : grilles alignées dizaines / unités ---- */
-  .ce1-grid{
+  /* ---- CE1 : calcul à gauche, grille de 50 blocs à droite ---- */
+  .ce1-layout{
     display:grid;
-    grid-template-columns:minmax(2.6em,auto) auto auto;
-    column-gap:28px;row-gap:12px;
+    grid-template-columns:auto auto;
+    gap:38px;
     align-items:center;justify-content:center;
     width:100%;
   }
-  .ce1-head{
-    font-size:.68rem;text-transform:uppercase;letter-spacing:.6px;
-    color:var(--muted);font-weight:700;text-align:center;
+  .ce1-calc{
+    display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+    font-variant-numeric:tabular-nums;
   }
-  .ce1-num{
-    font-size:clamp(1.7rem,5vw,2.5rem);font-weight:800;
-    text-align:right;font-variant-numeric:tabular-nums;
-    min-width:2.2em;line-height:1;
+  .ce1-line{
+    display:flex;align-items:baseline;justify-content:flex-end;gap:12px;
+    font-size:clamp(1.9rem,5.4vw,2.7rem);font-weight:800;line-height:1.05;
   }
-  .ce1-num.blue{color:var(--blue)}
-  .ce1-num.red{color:var(--carry)}
-  .ce1-num.ok{color:var(--ok-text);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
-  .ce1-zone{display:flex;gap:10px;justify-content:center;align-items:center;min-height:53px}
-  .ce1-sign{
-    grid-column:1 / -1;text-align:center;
-    font-size:1.5rem;font-weight:800;color:var(--muted);line-height:1;
-  }
+  .ce1-line .op{color:var(--muted);font-size:.8em}
+  .ce1-line .num.blue{color:var(--blue)}
+  .ce1-line .num.red{color:var(--carry)}
+  .ce1-line .res{color:var(--ok-text);min-width:1.1em;text-align:center}
+  .ce1-line .res.q{color:var(--muted)}
+  .ce1-rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
 
-  .frame{
-    display:grid;grid-template-columns:repeat(5,20px);grid-template-rows:repeat(2,20px);
-    gap:3px;padding:4px;border-radius:10px;
+  .blocks50{display:flex;flex-direction:column;gap:16px}
+  .ten-block{
+    display:flex;gap:14px;padding:6px;border-radius:12px;
     background:var(--panel2);border:1px solid var(--line);
   }
-  .frame.blue{background:#eef7ff;border-color:#cfe7fb}
-  .frame.red{background:#fff0f3;border-color:#ffd3dc}
-  .frame.ok{background:#eefaf1;border-color:#c9ecd5;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
-  .cell{position:relative;width:20px;height:20px;border-radius:5px;border:2px solid transparent}
-  .cell.empty{background:#fff;border-color:#e9e9ee}
-  .cell.blue{background:#a8dcff;border-color:#4aa3e0}
-  .cell.red{background:#ffc2cf;border-color:#ff6b85}
-  .cell.ok{background:#bff0cf;border-color:#4bd07f}
-  .cell.gone{background:#fff;border-style:dashed;border-color:#ff6b85}
-  .cell.gone::after{
+  .five-block{display:flex;gap:4px}
+  .blk{
+    position:relative;width:20px;height:20px;border-radius:5px;
+    background:#fff;border:2px solid #e2e2e8;box-sizing:border-box;
+    transition:background .15s,border-color .15s;
+  }
+  .blk.blue{background:#a8dcff;border-color:#4aa3e0}
+  .blk.red{background:#ffc2cf;border-color:#ff6b85}
+  .blk.blue.removed{border-color:var(--carry);border-style:dashed}
+  .blk.removed::after{
     content:"";position:absolute;inset:-2px;border-radius:5px;
     background:
       linear-gradient(45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%),
       linear-gradient(-45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%);
   }
+  .blk.pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
   @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
   .blocks-cap{color:var(--muted);font-size:.85rem;font-weight:500;text-align:center;min-height:20px}
 
@@ -250,10 +248,12 @@
   footer a:hover{text-decoration:underline}
 
   @media(max-width:680px){
-    .ce1-grid{column-gap:14px;row-gap:10px}
-    .frame{grid-template-columns:repeat(5,16px);grid-template-rows:repeat(2,16px);gap:2px;padding:3px}
-    .cell{width:16px;height:16px;border-radius:4px}
-    .ce1-zone{min-height:43px}
+    .ce1-layout{grid-template-columns:1fr;gap:20px}
+    .ce1-calc{align-items:center}
+    .blk{width:15px;height:15px;border-radius:4px}
+    .five-block{gap:3px}
+    .ten-block{gap:10px;padding:4px;border-radius:9px}
+    .blocks50{gap:10px}
     .corgi-zone{min-height:140px}
     .corgi-photo{width:120px}
     .keys{grid-template-columns:repeat(3,58px)}
@@ -273,7 +273,15 @@
 <!-- ===================== CE1 ===================== -->
 <div id="modeCE1">
   <div class="stage">
-    <div class="ce1-grid" id="ce1Grid"></div>
+    <div class="ce1-layout">
+      <div class="ce1-calc" id="ce1Calc">
+        <div class="ce1-line"><span class="num blue" id="ce1NumA">…</span></div>
+        <div class="ce1-line"><span class="op" id="ce1Op">+</span><span class="num red" id="ce1NumB">…</span></div>
+        <div class="ce1-rule"></div>
+        <div class="ce1-line"><span class="res q" id="ce1Res">?</span></div>
+      </div>
+      <div class="blocks50" id="ce1Fifty"></div>
+    </div>
     <div class="blocks-cap" id="ce1Cap"></div>
 
     <div class="keypad">
@@ -475,7 +483,11 @@
   /* =========================================================
      CE1 : petites additions / soustractions avec des blocs
      ========================================================= */
-  var ce1Grid = document.getElementById("ce1Grid");
+  var ce1Fifty = document.getElementById("ce1Fifty");
+  var ce1NumA = document.getElementById("ce1NumA");
+  var ce1NumB = document.getElementById("ce1NumB");
+  var ce1Op = document.getElementById("ce1Op");
+  var ce1Res = document.getElementById("ce1Res");
   var ce1Cap = document.getElementById("ce1Cap");
   var msgCE1 = document.getElementById("msgCE1");
   var corgiCE1 = document.getElementById("corgiCE1");
@@ -485,48 +497,50 @@
   var ce1 = { a:0, b:0, op:"+", ans:0, answered:false, nextTimer:null };
   var ce1Keypad = makeKeypad(document.getElementById("ce1Answer"), document.getElementById("ce1Keys"), checkCE1);
 
-  /* une grille = 2 lignes de 5 = un bloc de 10 ; chaque ligne = un bloc de 5 */
-  function frameHTML(filled, color, goneFrom){
-    var html = '<span class="frame ' + color + '">';
-    for (var i = 0; i < 10; i++){
-      var isFilled = i < filled;
-      var gone = (goneFrom != null && isFilled && i >= goneFrom);
-      var cls = isFilled ? color + (gone ? " gone" : "") : "empty";
-      html += '<span class="cell ' + cls + '"></span>';
+  var FIFTY = 50;   /* 5 blocs de 10 = 10 blocs de 5 = 50 blocs */
+
+  /* classe de chaque bloc : bleu = 1er nombre, rouge = 2e,
+     et blocs barrés (rouge) pour la soustraction */
+  function blkClass(idx){
+    var cls = "blk";
+    if (ce1.op === "+"){
+      if (idx < ce1.a) cls += " blue";
+      else if (idx < ce1.a + ce1.b) cls += " red";
+    } else {
+      if (idx < ce1.a) cls += " blue";
+      if (idx < ce1.a && idx >= ce1.a - ce1.b) cls += " removed";
     }
-    return html + "</span>";
-  }
-
-  function tensZone(n, color){
-    var html = "", t, tens = Math.floor(n / 10);
-    for (t = 0; t < tens; t++) html += frameHTML(10, color, null);
-    return html;
-  }
-
-  function unitsZone(n, color, goneFrom){
-    var units = n % 10;
-    return units > 0 ? frameHTML(units, color, goneFrom) : "";
-  }
-
-  function ce1RowHTML(n, numCls, color, goneFrom){
-    return '<span class="ce1-num ' + numCls + '">' + n + "</span>" +
-      '<span class="ce1-zone">' + tensZone(n, color) + "</span>" +
-      '<span class="ce1-zone">' + unitsZone(n, color, goneFrom) + "</span>";
+    return cls;
   }
 
   function renderCE1Grid(reveal){
-    var html = "";
-    html += '<span class="ce1-head"></span>' +
-            '<span class="ce1-head">Dizaines</span>' +
-            '<span class="ce1-head">Unités</span>';
-    html += ce1RowHTML(ce1.a, "blue", "blue", ce1.op === "−" ? ce1.a % 10 - ce1.b : null);
-    html += '<span class="ce1-sign">' + ce1.op + "</span>";
-    html += ce1RowHTML(ce1.b, "red", "red", null);
-    if (reveal){
-      html += '<span class="ce1-sign">=</span>';
-      html += ce1RowHTML(ce1.ans, "ok", "ok", null);
+    var html = "", t, h, i, idx;
+    for (t = 0; t < 5; t++){
+      html += '<div class="ten-block">';
+      for (h = 0; h < 2; h++){
+        html += '<div class="five-block">';
+        for (i = 0; i < 5; i++){
+          idx = t * 10 + h * 5 + i;
+          html += '<span class="' + blkClass(idx) + '"></span>';
+        }
+        html += "</div>";
+      }
+      html += "</div>";
     }
-    ce1Grid.innerHTML = html;
+    ce1Fifty.innerHTML = html;
+
+    ce1NumA.textContent = ce1.a;
+    ce1NumB.textContent = ce1.b;
+    ce1Op.textContent = ce1.op;
+    if (reveal){
+      ce1Res.textContent = ce1.ans;
+      ce1Res.classList.remove("q");
+      ce1Res.classList.remove("pop"); void ce1Res.offsetWidth; ce1Res.classList.add("pop");
+    } else {
+      ce1Res.textContent = "?";
+      ce1Res.classList.add("q");
+      ce1Res.classList.remove("pop");
+    }
   }
 
   function newCE1(){
@@ -535,25 +549,24 @@
 
     if (Math.random() < 0.5){
       ce1.op = "+";
-      ce1.a = rndInt(1, 9);
-      ce1.b = rndInt(1, 9);
+      do {
+        ce1.a = rndInt(3, 25);
+        ce1.b = rndInt(3, 20);
+      } while (ce1.a + ce1.b > FIFTY - 2);
       ce1.ans = ce1.a + ce1.b;
     } else {
       ce1.op = "−";
-      var options = [], x;
-      for (x = 2; x <= 18; x++){ if (x % 10 >= 1) options.push(x); }
-      ce1.a = options[rndInt(0, options.length - 1)];
-      var maxB = Math.min(9, ce1.a % 10, ce1.a - 1);
-      ce1.b = rndInt(1, maxB);
+      ce1.a = rndInt(12, 46);
+      ce1.b = rndInt(2, Math.min(12, ce1.a - 1));
       ce1.ans = ce1.a - ce1.b;
     }
 
     renderCE1Grid(false);
 
     if (ce1.op === "+"){
-      ce1Cap.textContent = "Chaque ligne = un bloc de 5, chaque grille pleine = 10.";
+      ce1Cap.textContent = "Bleu = 1er nombre, rouge = 2e. Un paquet = 5, une ligne = 10.";
     } else {
-      ce1Cap.textContent = "On barre " + ce1.b + " bloc" + (ce1.b > 1 ? "s" : "") + " dans les unités.";
+      ce1Cap.textContent = "Bleu = 1er nombre. On barre en rouge les " + ce1.b + " blocs du 2e.";
     }
 
     ce1Keypad.reset();
