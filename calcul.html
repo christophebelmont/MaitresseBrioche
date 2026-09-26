@@ -75,57 +75,69 @@
     gap:18px;
   }
 
-  /* ---- CE1 : chiffres + blocs ---- */
-  .calc-row{
+  /* ---- CE1 : grilles alignées dizaines / unités ---- */
+  .ce1-grid{
     display:grid;
-    grid-template-columns:minmax(170px,1fr) minmax(260px,1.7fr);
-    gap:26px;
-    align-items:center;
+    grid-template-columns:minmax(2.6em,auto) auto auto;
+    column-gap:28px;row-gap:12px;
+    align-items:center;justify-content:center;
     width:100%;
   }
-  .digits{
-    text-align:center;
-    font-size:clamp(2rem,6vw,3.4rem);
-    font-weight:800;
-    color:var(--blue);
-    line-height:1.25;
-    font-variant-numeric:tabular-nums;
-    letter-spacing:-.5px;
+  .ce1-head{
+    font-size:.68rem;text-transform:uppercase;letter-spacing:.6px;
+    color:var(--muted);font-weight:700;text-align:center;
   }
-  .digits .op{color:var(--carry)}
-  .digits .eq{color:var(--muted)}
-  .digits .q{color:var(--muted)}
-  .digits .ans{color:var(--ok-text)}
+  .ce1-num{
+    font-size:clamp(1.7rem,5vw,2.5rem);font-weight:800;
+    text-align:right;font-variant-numeric:tabular-nums;
+    min-width:2.2em;line-height:1;
+  }
+  .ce1-num.blue{color:var(--blue)}
+  .ce1-num.red{color:var(--carry)}
+  .ce1-num.ok{color:var(--ok-text);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  .ce1-zone{display:flex;gap:10px;justify-content:center;align-items:center;min-height:53px}
+  .ce1-sign{
+    grid-column:1 / -1;text-align:center;
+    font-size:1.5rem;font-weight:800;color:var(--muted);line-height:1;
+  }
 
-  .blocks{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%}
-  .block-group{display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center;min-height:25px}
-  .block-op{font-size:1.6rem;font-weight:800;color:var(--muted);line-height:1}
-  .rod{
-    display:inline-flex;gap:2px;padding:2px;border-radius:7px;
-    background:#ffe6c2;border:2px solid var(--wood);
-    box-shadow:0 1px 0 rgba(0,0,0,.05);
+  .frame{
+    display:grid;grid-template-columns:repeat(5,20px);grid-template-rows:repeat(2,20px);
+    gap:3px;padding:4px;border-radius:10px;
+    background:var(--panel2);border:1px solid var(--line);
   }
-  .rod i{display:block;width:15px;height:15px;border-radius:3px;background:#ffb340}
-  .unit{
-    position:relative;display:inline-block;width:19px;height:19px;border-radius:5px;
-    background:#a8dcff;border:2px solid #4aa3e0;box-shadow:0 1px 0 rgba(0,0,0,.05);
-  }
-  .unit.gone{background:#fff;border-style:dashed;opacity:.55}
-  .unit.gone::after{
+  .frame.blue{background:#eef7ff;border-color:#cfe7fb}
+  .frame.red{background:#fff0f3;border-color:#ffd3dc}
+  .frame.ok{background:#eefaf1;border-color:#c9ecd5;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  .cell{position:relative;width:20px;height:20px;border-radius:5px;border:2px solid transparent}
+  .cell.empty{background:#fff;border-color:#e9e9ee}
+  .cell.blue{background:#a8dcff;border-color:#4aa3e0}
+  .cell.red{background:#ffc2cf;border-color:#ff6b85}
+  .cell.ok{background:#bff0cf;border-color:#4bd07f}
+  .cell.gone{background:#fff;border-style:dashed;border-color:#ff6b85}
+  .cell.gone::after{
     content:"";position:absolute;inset:-2px;border-radius:5px;
     background:
       linear-gradient(45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%),
       linear-gradient(-45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%);
   }
-  .block-group.result .rod{border-color:var(--ok);background:#d9f5e2}
-  .block-group.result .rod i{background:#4bd07f}
-  .block-group.result .unit{background:#bff0cf;border-color:var(--ok)}
-  .block-group.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
-  @keyframes pop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
   .blocks-cap{color:var(--muted);font-size:.85rem;font-weight:500;text-align:center;min-height:20px}
 
   /* ---- CM2 : chrono ---- */
-  .chessclock{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+  .chessclock{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+  .clock-bonus{
+    position:absolute;top:-4px;left:50%;transform:translate(-50%,8px);
+    color:var(--ok-text);font-weight:800;font-size:1.15rem;
+    opacity:0;pointer-events:none;
+  }
+  .clock-bonus.show{animation:bonusPop 1s ease}
+  @keyframes bonusPop{
+    0%{opacity:0;transform:translate(-50%,8px) scale(.7)}
+    25%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
+    70%{opacity:1;transform:translate(-50%,-6px) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-22px) scale(1)}
+  }
   .clock-face{
     font-size:clamp(2.6rem,10vw,4.4rem);
     font-weight:800;
@@ -238,7 +250,10 @@
   footer a:hover{text-decoration:underline}
 
   @media(max-width:680px){
-    .calc-row{grid-template-columns:1fr;gap:18px}
+    .ce1-grid{column-gap:14px;row-gap:10px}
+    .frame{grid-template-columns:repeat(5,16px);grid-template-rows:repeat(2,16px);gap:2px;padding:3px}
+    .cell{width:16px;height:16px;border-radius:4px}
+    .ce1-zone{min-height:43px}
     .corgi-zone{min-height:140px}
     .corgi-photo{width:120px}
     .keys{grid-template-columns:repeat(3,58px)}
@@ -258,16 +273,7 @@
 <!-- ===================== CE1 ===================== -->
 <div id="modeCE1">
   <div class="stage">
-    <div class="calc-row">
-      <div class="digits" id="ce1Expr">…</div>
-      <div class="blocks">
-        <div class="block-group" id="ce1GroupA"></div>
-        <span class="block-op" id="ce1OpSign">+</span>
-        <div class="block-group" id="ce1GroupB"></div>
-        <span class="block-op hidden" id="ce1EqSign">=</span>
-        <div class="block-group result hidden" id="ce1Result"></div>
-      </div>
-    </div>
+    <div class="ce1-grid" id="ce1Grid"></div>
     <div class="blocks-cap" id="ce1Cap"></div>
 
     <div class="keypad">
@@ -307,6 +313,7 @@
 <div id="modeCM2" class="hidden">
   <div class="stage">
     <div class="chessclock">
+      <div class="clock-bonus" id="cm2Bonus">+10 s</div>
       <div class="clock-face" id="cm2Clock">60.0</div>
       <div class="clock-lbl">secondes de réflexion</div>
       <div class="clock-bar" id="cm2Bar"><i></i></div>
@@ -468,12 +475,7 @@
   /* =========================================================
      CE1 : petites additions / soustractions avec des blocs
      ========================================================= */
-  var ce1Expr = document.getElementById("ce1Expr");
-  var ce1GroupA = document.getElementById("ce1GroupA");
-  var ce1GroupB = document.getElementById("ce1GroupB");
-  var ce1OpSign = document.getElementById("ce1OpSign");
-  var ce1EqSign = document.getElementById("ce1EqSign");
-  var ce1Result = document.getElementById("ce1Result");
+  var ce1Grid = document.getElementById("ce1Grid");
   var ce1Cap = document.getElementById("ce1Cap");
   var msgCE1 = document.getElementById("msgCE1");
   var corgiCE1 = document.getElementById("corgiCE1");
@@ -483,26 +485,48 @@
   var ce1 = { a:0, b:0, op:"+", ans:0, answered:false, nextTimer:null };
   var ce1Keypad = makeKeypad(document.getElementById("ce1Answer"), document.getElementById("ce1Keys"), checkCE1);
 
-  function blocksHTML(n, goneFrom){
-    var tens = Math.floor(n / 10), units = n % 10, html = "", t, u;
-    for (t = 0; t < tens; t++){
-      html += '<span class="rod">';
-      for (var s = 0; s < 10; s++) html += "<i></i>";
-      html += "</span>";
+  /* une grille = 2 lignes de 5 = un bloc de 10 ; chaque ligne = un bloc de 5 */
+  function frameHTML(filled, color, goneFrom){
+    var html = '<span class="frame ' + color + '">';
+    for (var i = 0; i < 10; i++){
+      var isFilled = i < filled;
+      var gone = (goneFrom != null && isFilled && i >= goneFrom);
+      var cls = isFilled ? color + (gone ? " gone" : "") : "empty";
+      html += '<span class="cell ' + cls + '"></span>';
     }
-    for (u = 0; u < units; u++){
-      var gone = (goneFrom != null && u >= goneFrom);
-      html += '<span class="unit' + (gone ? " gone" : "") + '"></span>';
-    }
+    return html + "</span>";
+  }
+
+  function tensZone(n, color){
+    var html = "", t, tens = Math.floor(n / 10);
+    for (t = 0; t < tens; t++) html += frameHTML(10, color, null);
     return html;
   }
 
-  function renderCE1Expr(reveal){
-    var ansHtml = reveal
-      ? '<span class="ans">' + ce1.ans + "</span>"
-      : '<span class="q">?</span>';
-    ce1Expr.innerHTML = ce1.a + ' <span class="op">' + ce1.op + "</span> " +
-      ce1.b + ' <span class="eq">=</span> ' + ansHtml;
+  function unitsZone(n, color, goneFrom){
+    var units = n % 10;
+    return units > 0 ? frameHTML(units, color, goneFrom) : "";
+  }
+
+  function ce1RowHTML(n, numCls, color, goneFrom){
+    return '<span class="ce1-num ' + numCls + '">' + n + "</span>" +
+      '<span class="ce1-zone">' + tensZone(n, color) + "</span>" +
+      '<span class="ce1-zone">' + unitsZone(n, color, goneFrom) + "</span>";
+  }
+
+  function renderCE1Grid(reveal){
+    var html = "";
+    html += '<span class="ce1-head"></span>' +
+            '<span class="ce1-head">Dizaines</span>' +
+            '<span class="ce1-head">Unités</span>';
+    html += ce1RowHTML(ce1.a, "blue", "blue", ce1.op === "−" ? ce1.a % 10 - ce1.b : null);
+    html += '<span class="ce1-sign">' + ce1.op + "</span>";
+    html += ce1RowHTML(ce1.b, "red", "red", null);
+    if (reveal){
+      html += '<span class="ce1-sign">=</span>';
+      html += ce1RowHTML(ce1.ans, "ok", "ok", null);
+    }
+    ce1Grid.innerHTML = html;
   }
 
   function newCE1(){
@@ -524,25 +548,14 @@
       ce1.ans = ce1.a - ce1.b;
     }
 
-    renderCE1Expr(false);
+    renderCE1Grid(false);
 
     if (ce1.op === "+"){
-      ce1GroupA.innerHTML = blocksHTML(ce1.a);
-      ce1GroupB.innerHTML = blocksHTML(ce1.b);
-      ce1GroupA.classList.remove("hidden");
-      ce1OpSign.classList.remove("hidden");
-      ce1GroupB.classList.remove("hidden");
-      ce1Cap.textContent = "Compte les barres (10) et les blocs (1).";
+      ce1Cap.textContent = "Chaque ligne = un bloc de 5, chaque grille pleine = 10.";
     } else {
-      ce1GroupA.innerHTML = blocksHTML(ce1.a, ce1.a % 10 - ce1.b);
-      ce1GroupB.classList.add("hidden");
-      ce1OpSign.classList.add("hidden");
-      ce1Cap.textContent = "On barre " + ce1.b + " bloc" + (ce1.b > 1 ? "s" : "") + ".";
+      ce1Cap.textContent = "On barre " + ce1.b + " bloc" + (ce1.b > 1 ? "s" : "") + " dans les unités.";
     }
 
-    ce1EqSign.classList.add("hidden");
-    ce1Result.classList.add("hidden");
-    ce1Result.innerHTML = "";
     ce1Keypad.reset();
     msgCE1.textContent = "";
     msgCE1.className = "msg";
@@ -556,11 +569,7 @@
     var v = parseInt(raw, 10);
     if (v === ce1.ans){
       ce1.answered = true;
-      renderCE1Expr(true);
-      ce1Result.innerHTML = blocksHTML(ce1.ans);
-      ce1Result.classList.remove("hidden");
-      ce1EqSign.classList.remove("hidden");
-      ce1Result.classList.remove("pop"); void ce1Result.offsetWidth; ce1Result.classList.add("pop");
+      renderCE1Grid(true);
       playBravoSound();
       launchConfetti();
       corgiHop(corgiCE1);
@@ -594,9 +603,11 @@
   var corgiCM2 = document.getElementById("corgiCM2");
   var corgiCM2Ctl = Corgi.create(document.getElementById("corgiCM2Img"));
   var speechCM2 = document.getElementById("speechCM2");
+  var cm2Bonus = document.getElementById("cm2Bonus");
   var cm2Keypad = makeKeypad(document.getElementById("cm2Answer"), document.getElementById("cm2Keys"), checkCM2);
 
   var DURATION = 60000;
+  var BONUS_MS = 10000;
   var BEST_KEY = "calcul_cm2_best";
   var cm2 = {
     a:0, b:0, op:"+", ans:0,
@@ -621,6 +632,12 @@
     var low = cm2.remaining <= 10000;
     cm2Clock.classList.toggle("low", low);
     cm2Bar.classList.toggle("low", low);
+  }
+
+  function showBonus(){
+    cm2Bonus.classList.remove("show");
+    void cm2Bonus.offsetWidth;
+    cm2Bonus.classList.add("show");
   }
 
   function clockTick(ts){
@@ -693,13 +710,16 @@
     if (v === cm2.ans){
       stopClock();
       cm2.score++;
+      cm2.remaining = Math.min(DURATION, cm2.remaining + BONUS_MS);
+      renderClock();
       cm2Score.textContent = cm2.score;
       playBravoSound();
       launchConfetti();
       corgiHop(corgiCM2);
       corgiCM2Ctl.happy();
       showSpeech(speechCM2, "Un point !");
-      msgCM2.textContent = "Bravo, +1 point !";
+      showBonus();
+      msgCM2.textContent = "Bravo, +1 point et +10 secondes !";
       msgCM2.className = "msg ok";
       cm2.nextTimer = setTimeout(function(){
         if (!cm2.active) return;
@@ -777,7 +797,7 @@
     btnCM2.classList.toggle("active", !isCE1);
     sub.innerHTML = isCE1
       ? "CE1 : de petites <b>additions</b> et <b>soustractions</b>, avec des barres de dizaines et des blocs d'unités pour bien voir."
-      : "CM2 : additions et soustractions, <b>1 minute</b> de temps de réflexion. Le chrono s'arrête quand tu trouves et tu marques un point !";
+      : "CM2 : additions et soustractions, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "ce1" && !isCE1 && cm2.active && cm2.wasRunning){
