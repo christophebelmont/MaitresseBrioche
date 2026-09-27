@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f5f7">
+<title>Le calcul mental</title>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel2:#f7f7f9;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --on:#ff9500;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --carry:#ff375f;
+    --blue:#0071e3;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    overflow:hidden;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .app{
+    height:100vh;
+    height:100dvh;
+    display:flex;flex-direction:column;
+    gap:6px;
+    padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  /* ---- barre du haut : compteur (gauche) + scores (droite) ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:2.2rem}
+  .counter{
+    font-weight:800;font-size:2rem;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+    color:var(--blue);
+  }
+  .counter.low{color:var(--carry)}
+  .score{
+    font-weight:600;font-size:.86rem;line-height:1.15;
+    text-align:right;color:var(--muted);
+  }
+  .score b{color:var(--on);font-size:1.35rem;font-weight:800}
+  .score .rec b{color:var(--blue);font-size:1rem}
+
+  /* ---- bascule de niveau minimale ---- */
+  .lvltoggle{
+    align-self:center;display:inline-flex;gap:2px;padding:2px;
+    background:#e8e8ed;border-radius:999px;
+  }
+  .lvltoggle button{
+    font:inherit;font-weight:600;font-size:.78rem;
+    padding:4px 14px;border-radius:999px;border:0;background:transparent;
+    color:var(--muted);cursor:pointer;
+  }
+  .lvltoggle button.active{background:#fff;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+  /* ---- zone centrale ---- */
+  .stage{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:10px;overflow-y:auto;
+  }
+  .stage.hidden{display:none}
+
+  /* calcul posé (Clara) */
+  .op{
+    display:flex;flex-direction:column;align-items:flex-end;gap:5px;
+    padding-top:1em;
+    font-variant-numeric:tabular-nums;font-weight:800;
+    font-size:clamp(1.5rem,7.8vw,2.2rem);line-height:1;
+  }
+  .op .line{display:flex;align-items:stretch;justify-content:flex-end;gap:12px}
+  .op .sign{display:flex;align-items:center;color:var(--muted);font-size:.8em}
+  .op .rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
+  .num{display:inline-flex;align-items:stretch}
+  .num .slot{position:relative;display:flex;align-items:center;justify-content:center;min-width:.62em}
+  .num .sep{display:flex;justify-content:center;width:.5em}
+  .num .sep i{display:block;width:2px;border-radius:2px;background:#e3e3e9}
+  .num.blue .slot{color:var(--blue)}
+  .num.red .slot{color:var(--carry)}
+  .num.res .slot{color:var(--blue)}
+  .num.res.ok .slot{color:var(--ok-text)}
+  .num.res.q .slot{color:var(--muted)}
+  .carry-badge{
+    position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
+    font-size:.44em;font-weight:800;color:#fff;line-height:1.8;
+    min-width:2.2em;padding:0 .26em;border-radius:999px;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.22);white-space:nowrap;
+  }
+  .carry-badge.plus{background:var(--on)}
+  .carry-badge.minus{background:var(--carry)}
+
+  /* grille compacte de 50 blocs (Clara) */
+  .blocks50{display:flex;flex-direction:column;gap:5px}
+  .ten-block{
+    display:flex;align-items:center;gap:5px;
+    padding:2px 5px 2px 3px;border-radius:7px;
+    background:var(--panel2);border:1px solid var(--line);
+  }
+  .ten-tag{font-size:.5rem;font-weight:800;color:var(--muted);min-width:1.7em;text-align:right;font-variant-numeric:tabular-nums}
+  .fives{display:flex}
+  .five-block{display:flex;gap:2px;padding:2px;border-radius:5px;background:#fff}
+  .five-block + .five-block{position:relative;margin-left:8px}
+  .five-block + .five-block::before{
+    content:"";position:absolute;left:-5px;top:0;bottom:0;border-left:2px dashed #d0d0d8;
+  }
+  .blk{position:relative;width:10px;height:10px;border-radius:3px;background:#fff;border:1.5px solid #e2e2e8;box-sizing:border-box}
+  .blk.blue{background:#a8dcff;border-color:#4aa3e0}
+  .blk.red{background:#ffc2cf;border-color:#ff6b85}
+  .blk.blue.removed{border-color:var(--carry);border-style:dashed}
+  .blk.removed::after{
+    content:"";position:absolute;inset:-1.5px;border-radius:3px;
+    background:
+      linear-gradient(45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%),
+      linear-gradient(-45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%);
+  }
+
+  /* problème (Andrea) */
+  .problem{
+    font-size:clamp(2.2rem,13vw,3.4rem);font-weight:800;
+    font-variant-numeric:tabular-nums;text-align:center;letter-spacing:-.5px;line-height:1.15;
+  }
+  .problem .op{color:var(--carry)}
+  .problem .eq{color:var(--muted)}
+  .problem .typed{color:var(--blue)}
+  .problem .typed.ok{color:var(--ok-text)}
+  .problem .typed.empty{color:var(--muted)}
+  .hint{color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;min-height:1.2em}
+
+  /* ---- gros pavé numérique (validation automatique) ---- */
+  .keypad{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    width:100%;max-width:520px;margin:0 auto;
+  }
+  .keypad button{
+    font:inherit;font-weight:700;font-size:1.9rem;
+    height:clamp(46px,9.5vh,70px);
+    border-radius:16px;border:1px solid var(--line);
+    background:#fff;color:var(--txt);cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
+    touch-action:manipulation;
+  }
+  .keypad button:active{transform:scale(.96);background:#eef1f5}
+  .keypad button.del{background:#f2f2f7;color:var(--muted);font-size:1.6rem}
+  .keypad button.zero{grid-column:1 / span 2}
+  .keypad.shake{animation:shake .4s ease}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(3px)}
+  }
+
+  /* ---- surimpression corgi + confettis ---- */
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:62}
+  .overlay{
+    position:fixed;inset:0;z-index:61;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;transition:opacity .25s ease;
+  }
+  .overlay.show{opacity:1}
+  .overlay img{
+    width:min(52vw,240px);height:auto;
+    filter:drop-shadow(0 14px 34px rgba(0,0,0,.28));
+    transform:scale(.7);transition:transform .32s cubic-bezier(.2,1.4,.4,1);
+  }
+  .overlay.show img{transform:scale(1)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="counter" id="mCounter">✓ 0</div>
+    <div class="score" id="mScore"></div>
+  </header>
+
+  <nav class="lvltoggle" aria-label="Choix du niveau">
+    <button type="button" id="btnClara" class="active">Clara</button>
+    <button type="button" id="btnAndrea">Andrea</button>
+  </nav>
+
+  <!-- ---- Clara ---- -->
+  <div class="stage" id="stageClara">
+    <div class="op" id="mOpBox">
+      <div class="line"><span class="num blue" id="mNumA"></span></div>
+      <div class="line"><span class="sign" id="mOp">+</span><span class="num red" id="mNumB"></span></div>
+      <div class="rule"></div>
+      <div class="line"><span class="num res q" id="mRes"></span></div>
+    </div>
+    <div class="blocks50" id="mGrid"></div>
+  </div>
+
+  <!-- ---- Andrea ---- -->
+  <div class="stage hidden" id="stageAndrea">
+    <div class="problem" id="mProblem"></div>
+    <div class="hint" id="mHint"></div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <button type="button" data-k="1">1</button>
+    <button type="button" data-k="2">2</button>
+    <button type="button" data-k="3">3</button>
+    <button type="button" data-k="4">4</button>
+    <button type="button" data-k="5">5</button>
+    <button type="button" data-k="6">6</button>
+    <button type="button" data-k="7">7</button>
+    <button type="button" data-k="8">8</button>
+    <button type="button" data-k="9">9</button>
+    <button type="button" data-k="0" class="zero">0</button>
+    <button type="button" data-k="del" class="del">⌫</button>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay"><img id="overlayImg" src="Content.png" alt=""></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- sons ---------- */
+  var SOUNDS = ["fanfare.mp3", "chien.mp3"];
+  var soundPool = SOUNDS.map(function(src){ var a = new Audio(src); a.preload = "auto"; return a; });
+  function playBravoSound(){
+    if (!soundPool.length) return;
+    try {
+      var a = soundPool[Math.floor(Math.random() * soundPool.length)];
+      a.currentTime = 0;
+      var p = a.play();
+      if (p && p.catch) p.catch(function(){});
+    } catch (e) {}
+  }
+
+  /* ---------- confettis ---------- */
+  var canvas = document.getElementById("confetti");
+  var ctx = canvas.getContext("2d");
+  var parts = [], rafConf = null;
+  var COLORS = ["#ff5c8a", "#ffd23f", "#4ade80", "#5aa9ff", "#f97316", "#a855f7", "#ffffff"];
+  function sizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+  function launchConfetti(n){
+    var count = n || 130;
+    for (var i = 0; i < count; i++){
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.4,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        w: 6 + Math.random() * 8, h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+    if (!rafConf) rafConf = requestAnimationFrame(tickConfetti);
+  }
+  function tickConfetti(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.vx *= 0.995; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      if (p.y > canvas.height + 50) parts.splice(i, 1);
+    }
+    if (parts.length) rafConf = requestAnimationFrame(tickConfetti);
+    else { rafConf = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+
+  /* ---------- refs ---------- */
+  var mCounter = document.getElementById("mCounter");
+  var mScore = document.getElementById("mScore");
+  var btnClara = document.getElementById("btnClara");
+  var btnAndrea = document.getElementById("btnAndrea");
+  var stageClara = document.getElementById("stageClara");
+  var stageAndrea = document.getElementById("stageAndrea");
+  var mNumA = document.getElementById("mNumA");
+  var mNumB = document.getElementById("mNumB");
+  var mOp = document.getElementById("mOp");
+  var mRes = document.getElementById("mRes");
+  var mGrid = document.getElementById("mGrid");
+  var mProblem = document.getElementById("mProblem");
+  var mHint = document.getElementById("mHint");
+  var keypad = document.getElementById("keypad");
+  var overlay = document.getElementById("overlay");
+  var overlayImg = document.getElementById("overlayImg");
+
+  var PH = '<span class="slot tens"></span><span class="sep"><i></i></span><span class="slot units">?</span>';
+  var FIFTY = 50;
+  var DURATION = 60000, BONUS = 10000;
+  var BEST_CLARA = "calcul_clara_record";
+  var BEST_ANDREA = "calcul_cm2_best";
+
+  function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function saveInt(key, v){ try { localStorage.setItem(key, String(v)); } catch (e) {} }
+
+  /* ---------- état ---------- */
+  var mode = "clara";
+
+  var clara = {
+    a:0, b:0, op:"+", ans:0, value:"", locked:false,
+    count:0, streak:0,
+    best: parseInt(localStorage.getItem(BEST_CLARA), 10) || 0,
+    nextTimer:null
+  };
+  var andrea = {
+    a:0, b:0, op:"+", ans:0, value:"", locked:false,
+    score:0, best: parseInt(localStorage.getItem(BEST_ANDREA), 10) || 0,
+    active:false, running:false, paused:false,
+    remaining:DURATION, lastTs:null, raf:null, nextTimer:null
+  };
+
+  /* ---------- surimpression corgi ---------- */
+  var overlayTimer = null;
+  function flashCorgi(kind){
+    overlayImg.src = (kind === "happy") ? "TresContent.png"
+                   : (kind === "cry") ? "Pleurs.png"
+                   : "Triste.png";
+    overlay.classList.add("show");
+    if (overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(function(){ overlay.classList.remove("show"); }, kind === "happy" ? 900 : 800);
+  }
+
+  /* ---------- nombres (dizaines | unités + retenue) ---------- */
+  function slotsHTML(n, badge){
+    var t = Math.floor(n / 10), u = n % 10;
+    var badgeHtml = badge ? '<span class="carry-badge ' + badge.cls + '">' + badge.txt + "</span>" : "";
+    return '<span class="slot tens">' + badgeHtml + (t > 0 ? t : "") + "</span>" +
+      '<span class="sep"><i></i></span>' +
+      '<span class="slot units">' + u + "</span>";
+  }
+  function claraBadge(){
+    if (clara.op === "+" && (clara.a % 10) + (clara.b % 10) >= 10) return { txt:"+1", cls:"plus" };
+    if (clara.op === "−" && (clara.a % 10) < (clara.b % 10)) return { txt:"−1", cls:"minus" };
+    return null;
+  }
+  function blkClass(idx){
+    var cls = "blk";
+    if (clara.op === "+"){
+      if (idx < clara.a) cls += " blue";
+      else if (idx < clara.a + clara.b) cls += " red";
+    } else {
+      if (idx < clara.a) cls += " blue";
+      if (idx < clara.a && idx >= clara.a - clara.b) cls += " removed";
+    }
+    return cls;
+  }
+
+  /* ---------- rendu ---------- */
+  function renderClaraAnswer(state){
+    if (state === "empty"){ mRes.className = "num res q"; mRes.innerHTML = PH; }
+    else if (state === "ok"){ mRes.className = "num res ok"; mRes.innerHTML = slotsHTML(clara.ans, null); }
+    else { mRes.className = "num res"; mRes.innerHTML = slotsHTML(parseInt(clara.value, 10) || 0, null); }
+  }
+  function renderClara(){
+    var html = "", t, h, i, idx;
+    for (t = 0; t < 5; t++){
+      html += '<div class="ten-block"><span class="ten-tag">' + ((t + 1) * 10) + '</span><div class="fives">';
+      for (h = 0; h < 2; h++){
+        html += '<div class="five-block">';
+        for (i = 0; i < 5; i++){ idx = t * 10 + h * 5 + i; html += '<span class="' + blkClass(idx) + '"></span>'; }
+        html += "</div>";
+      }
+      html += "</div></div>";
+    }
+    mGrid.innerHTML = html;
+    mNumA.innerHTML = slotsHTML(clara.a, claraBadge());
+    mNumB.innerHTML = slotsHTML(clara.b, null);
+    mOp.textContent = clara.op;
+    renderClaraAnswer(clara.value === "" ? "empty" : "typing");
+  }
+
+  function renderAndreaProblem(){
+    mProblem.innerHTML = andrea.a + ' <span class="op">' + andrea.op + "</span> " +
+      andrea.b + ' <span class="eq">=</span> <span class="typed' +
+      (andrea.value === "" ? " empty" : "") + '" id="mTyped">' +
+      (andrea.value === "" ? "?" : andrea.value) + "</span>";
+  }
+  function renderAndreaAnswer(state){
+    var el = document.getElementById("mTyped");
+    if (!el) return;
+    if (state === "empty"){ el.textContent = "?"; el.className = "typed empty"; }
+    else if (state === "ok"){ el.textContent = andrea.value; el.className = "typed ok"; }
+    else { el.textContent = andrea.value; el.className = "typed"; }
+  }
+  function renderAnswer(){
+    if (mode === "clara") renderClaraAnswer(clara.value === "" ? "empty" : "typing");
+    else renderAndreaAnswer(andrea.value === "" ? "empty" : "typing");
+  }
+
+  /* ---------- en-tête ---------- */
+  function updateClaraHeader(){
+    mCounter.textContent = "✓ " + clara.count;
+    mCounter.classList.remove("low");
+    mScore.innerHTML = 'record <b>' + clara.best + "</b>";
+  }
+  function updateAndreaHeader(){
+    mCounter.textContent = (andrea.remaining / 1000).toFixed(1);
+    mCounter.classList.toggle("low", andrea.remaining <= 10000);
+    mScore.innerHTML = 'points <b>' + andrea.score + '</b><br><span class="rec">record <b>' + andrea.best + "</b></span>";
+  }
+
+  /* ---------- validation automatique ---------- */
+  function checkAnswer(st){
+    var target = String(st.ans), v = st.value;
+    if (v === "") return;
+    if (v === target){ onCorrect(st); return; }
+    if (target.indexOf(v) === 0) return;   /* encore un début valide : on attend */
+    onWrong(st);
+  }
+
+  /* ---------- Clara ---------- */
+  function newClara(){
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    clara.locked = false;
+    clara.value = "";
+    if (Math.random() < 0.5){
+      clara.op = "+";
+      do { clara.a = rndInt(3, 25); clara.b = rndInt(3, 20); } while (clara.a + clara.b > FIFTY - 2);
+      clara.ans = clara.a + clara.b;
+    } else {
+      clara.op = "−";
+      clara.a = rndInt(12, 46);
+      clara.b = rndInt(2, Math.min(12, clara.a - 1));
+      clara.ans = clara.a - clara.b;
+    }
+    renderClara();
+  }
+
+  function claraCorrect(){
+    clara.locked = true;
+    clara.value = String(clara.ans);
+    renderClaraAnswer("ok");
+    clara.count++;
+    clara.streak++;
+    if (clara.streak > clara.best){ clara.best = clara.streak; saveInt(BEST_CLARA, clara.best); }
+    updateClaraHeader();
+    playBravoSound();
+    launchConfetti();
+    flashCorgi("happy");
+    clara.nextTimer = setTimeout(newClara, 950);
+  }
+
+  /* ---------- Andrea ---------- */
+  function newAndreaProblem(){
+    andrea.locked = false;
+    andrea.value = "";
+    if (Math.random() < 0.5){
+      andrea.op = "+";
+      andrea.a = rndInt(11, 89);
+      andrea.b = rndInt(11, 89);
+      andrea.ans = andrea.a + andrea.b;
+    } else {
+      andrea.op = "−";
+      andrea.a = rndInt(31, 99);
+      andrea.b = rndInt(11, andrea.a - 1);
+      andrea.ans = andrea.a - andrea.b;
+    }
+    renderAndreaProblem();
+  }
+
+  function renderClock(){
+    if (mode !== "andrea") return;
+    mCounter.textContent = (andrea.remaining / 1000).toFixed(1);
+    mCounter.classList.toggle("low", andrea.remaining <= 10000);
+  }
+  function clockTick(ts){
+    if (!andrea.running) return;
+    if (andrea.lastTs == null) andrea.lastTs = ts;
+    var dt = ts - andrea.lastTs; andrea.lastTs = ts;
+    andrea.remaining -= dt;
+    if (andrea.remaining <= 0){ andrea.remaining = 0; renderClock(); endAndrea(); return; }
+    renderClock();
+    andrea.raf = requestAnimationFrame(clockTick);
+  }
+  function startClock(){
+    if (!andrea.active || andrea.running) return;
+    andrea.running = true; andrea.lastTs = null;
+    andrea.raf = requestAnimationFrame(clockTick);
+  }
+  function stopClock(){
+    andrea.running = false;
+    if (andrea.raf) cancelAnimationFrame(andrea.raf);
+    andrea.raf = null;
+  }
+
+  function startAndrea(){
+    if (andrea.nextTimer){ clearTimeout(andrea.nextTimer); andrea.nextTimer = null; }
+    stopClock();
+    andrea.active = true; andrea.paused = false;
+    andrea.score = 0; andrea.remaining = DURATION;
+    mHint.textContent = "";
+    updateAndreaHeader();
+    newAndreaProblem();
+    startClock();
+  }
+  function endAndrea(){
+    stopClock();
+    andrea.active = false;
+    if (andrea.nextTimer){ clearTimeout(andrea.nextTimer); andrea.nextTimer = null; }
+    if (andrea.score > andrea.best){ andrea.best = andrea.score; saveInt(BEST_ANDREA, andrea.best); }
+    updateAndreaHeader();
+    mProblem.innerHTML = '<span class="typed ok">' + andrea.score + "</span> point" + (andrea.score > 1 ? "s" : "");
+    mHint.textContent = "Touche le chrono pour rejouer";
+    flashCorgi(andrea.score === 0 ? "cry" : "happy");
+    if (andrea.score > 0) launchConfetti();
+  }
+  function andreaCorrect(){
+    stopClock();
+    andrea.locked = true;
+    andrea.value = String(andrea.ans);
+    renderAndreaAnswer("ok");
+    andrea.score++;
+    andrea.remaining = Math.min(DURATION, andrea.remaining + BONUS);
+    renderClock(); updateAndreaHeader();
+    playBravoSound();
+    launchConfetti();
+    flashCorgi("happy");
+    andrea.nextTimer = setTimeout(function(){
+      if (!andrea.active) return;
+      newAndreaProblem();
+      startClock();
+    }, 700);
+  }
+
+  /* ---------- réactions ---------- */
+  function onCorrect(st){
+    if (st === clara) claraCorrect();
+    else andreaCorrect();
+  }
+  function onWrong(st){
+    st.value = "";
+    renderAnswer();
+    keypad.classList.remove("shake"); void keypad.offsetWidth; keypad.classList.add("shake");
+    if (st === clara){ clara.streak = 0; updateClaraHeader(); }
+    flashCorgi("sad");
+  }
+
+  /* ---------- clavier ---------- */
+  function press(k){
+    var st = (mode === "clara") ? clara : andrea;
+    if (st.locked) return;
+    if (mode === "andrea" && !andrea.running) return;
+    if (k === "del"){ st.value = st.value.slice(0, -1); renderAnswer(); return; }
+    if (st.value.length >= 3) return;
+    st.value += k;
+    renderAnswer();
+    checkAnswer(st);
+  }
+  keypad.addEventListener("click", function(evt){
+    var b = evt.target.closest("button[data-k]");
+    if (!b) return;
+    press(b.getAttribute("data-k"));
+  });
+
+  document.addEventListener("keydown", function(evt){
+    if (/^[0-9]$/.test(evt.key)) press(evt.key);
+    else if (evt.key === "Backspace"){ evt.preventDefault(); press("del"); }
+  });
+
+  /* ---------- bascule de niveau ---------- */
+  function setMode(m){
+    if (mode === "andrea" && m !== "andrea"){ if (andrea.running){ andrea.paused = true; stopClock(); } }
+    mode = m;
+    var isClara = (m === "clara");
+    stageClara.classList.toggle("hidden", !isClara);
+    stageAndrea.classList.toggle("hidden", isClara);
+    btnClara.classList.toggle("active", isClara);
+    btnAndrea.classList.toggle("active", !isClara);
+    if (isClara){
+      updateClaraHeader();
+      renderClara();
+    } else {
+      if (andrea.active && andrea.paused){ andrea.paused = false; startClock(); renderAndreaProblem(); }
+      else if (!andrea.active){ startAndrea(); }
+      updateAndreaHeader();
+    }
+  }
+  btnClara.addEventListener("click", function(){ setMode("clara"); });
+  btnAndrea.addEventListener("click", function(){ setMode("andrea"); });
+  mCounter.addEventListener("click", function(){
+    if (mode === "andrea" && !andrea.active) startAndrea();
+  });
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden){ if (andrea.running){ andrea.paused = true; stopClock(); } }
+    else if (mode === "andrea" && andrea.active && andrea.paused){ andrea.paused = false; startClock(); }
+  });
+
+  /* ---------- init ---------- */
+  setMode("clara");
+  newClara();
+})();
+</script>
+</body>
+</html>
