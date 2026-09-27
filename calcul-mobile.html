@@ -144,16 +144,22 @@
       linear-gradient(-45deg,transparent 43%,var(--carry) 43%,var(--carry) 57%,transparent 57%);
   }
 
-  /* problème (Andrea) */
-  .problem{
-    font-size:clamp(2.2rem,13vw,3.4rem);font-weight:800;
-    font-variant-numeric:tabular-nums;text-align:center;letter-spacing:-.5px;line-height:1.15;
+  /* problème posé (Andrea) : chiffres alignés par rang (unités sous unités) */
+  .posed{
+    display:flex;flex-direction:column;align-items:flex-end;gap:7px;
+    padding-top:1em;
+    font-weight:800;font-variant-numeric:tabular-nums;
+    font-size:clamp(2rem,12vw,3rem);line-height:1;
   }
-  .problem .op{color:var(--carry)}
-  .problem .eq{color:var(--muted)}
-  .problem .typed{color:var(--blue)}
-  .problem .typed.ok{color:var(--ok-text)}
-  .problem .typed.empty{color:var(--muted)}
+  .posed .line{display:flex;align-items:center;justify-content:flex-end;gap:14px;width:100%}
+  .posed .sign{color:var(--muted);font-size:.8em}
+  .posed .rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
+  .posed .ans{
+    min-width:3ch;text-align:right;           /* réserve la place : rien ne bouge */
+    color:var(--muted);
+  }
+  .posed .ans.typing{color:var(--blue)}
+  .posed .ans.ok{color:var(--ok-text)}
   .hint{color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;min-height:1.2em}
 
   /* ---- gros pavé numérique (validation automatique) ---- */
@@ -224,7 +230,12 @@
 
   <!-- ---- Andrea ---- -->
   <div class="stage hidden" id="stageAndrea">
-    <div class="problem" id="mProblem"></div>
+    <div class="posed">
+      <div class="line"><span class="val" id="mANumA"></span></div>
+      <div class="line"><span class="sign" id="mAOp">+</span><span class="val" id="mANumB"></span></div>
+      <div class="rule"></div>
+      <div class="line"><span class="ans" id="mAns"></span></div>
+    </div>
     <div class="hint" id="mHint"></div>
   </div>
 
@@ -312,7 +323,10 @@
   var mOp = document.getElementById("mOp");
   var mRes = document.getElementById("mRes");
   var mGrid = document.getElementById("mGrid");
-  var mProblem = document.getElementById("mProblem");
+  var mANumA = document.getElementById("mANumA");
+  var mANumB = document.getElementById("mANumB");
+  var mAOp = document.getElementById("mAOp");
+  var mAns = document.getElementById("mAns");
   var mHint = document.getElementById("mHint");
   var keypad = document.getElementById("keypad");
   var overlay = document.getElementById("overlay");
@@ -404,17 +418,15 @@
   }
 
   function renderAndreaProblem(){
-    mProblem.innerHTML = andrea.a + ' <span class="op">' + andrea.op + "</span> " +
-      andrea.b + ' <span class="eq">=</span> <span class="typed' +
-      (andrea.value === "" ? " empty" : "") + '" id="mTyped">' +
-      (andrea.value === "" ? "?" : andrea.value) + "</span>";
+    mANumA.textContent = andrea.a;
+    mANumB.textContent = andrea.b;
+    mAOp.textContent = andrea.op;
+    renderAndreaAnswer(andrea.value === "" ? "empty" : "typing");
   }
   function renderAndreaAnswer(state){
-    var el = document.getElementById("mTyped");
-    if (!el) return;
-    if (state === "empty"){ el.textContent = "?"; el.className = "typed empty"; }
-    else if (state === "ok"){ el.textContent = andrea.value; el.className = "typed ok"; }
-    else { el.textContent = andrea.value; el.className = "typed"; }
+    if (state === "empty"){ mAns.textContent = "?"; mAns.className = "ans"; }
+    else if (state === "ok"){ mAns.textContent = andrea.value; mAns.className = "ans ok"; }
+    else { mAns.textContent = andrea.value; mAns.className = "ans typing"; }
   }
   function renderAnswer(){
     if (mode === "clara") renderClaraAnswer(clara.value === "" ? "empty" : "typing");
@@ -533,7 +545,11 @@
     if (andrea.nextTimer){ clearTimeout(andrea.nextTimer); andrea.nextTimer = null; }
     if (andrea.score > andrea.best){ andrea.best = andrea.score; saveInt(BEST_ANDREA, andrea.best); }
     updateAndreaHeader();
-    mProblem.innerHTML = '<span class="typed ok">' + andrea.score + "</span> point" + (andrea.score > 1 ? "s" : "");
+    mANumA.textContent = "";
+    mANumB.textContent = "";
+    mAOp.textContent = "";
+    mAns.textContent = andrea.score + " pt" + (andrea.score > 1 ? "s" : "");
+    mAns.className = "ans ok";
     mHint.textContent = "Touche le chrono pour rejouer";
     flashCorgi(andrea.score === 0 ? "cry" : "happy");
     if (andrea.score > 0) launchConfetti();
