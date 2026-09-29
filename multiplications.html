@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les tables de multiplication</title>
+<script>
+  /* bascule automatique vers la version mobile sur téléphone / tablette
+     (ajouter ?desktop=1 pour forcer la version bureau) */
+  (function(){
+    try{
+      if (new URLSearchParams(location.search).get("desktop") === "1") return;
+      var ua = navigator.userAgent || "";
+      var mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+      if (!mobile && window.matchMedia && window.matchMedia("(pointer: coarse)").matches){
+        mobile = Math.min(window.innerWidth, window.innerHeight) <= 820;
+      }
+      if (mobile) location.replace("multiplications-mobile.html");
+    }catch(e){}
+  })();
+</script>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel2:#f7f7f9;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --on:#ff9500;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --carry:#ff375f;
+    --blue:#0071e3;
+    --blue-dark:#0060c0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff5c8a' fill-opacity='0.10' d='M12 21s-8-5.2-8-11c0-3.3 2.5-5.5 5.5-5.5 1.7 0 3.2 1 4 2.5.8-1.5 2.3-2.5 4-2.5 3 0 5.5 2.2 5.5 5.5 0 5.8-8 11-8 11z'/%3E%3C/svg%3E");
+    background-repeat:repeat;
+    background-attachment:fixed;
+    padding:26px 16px 50px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  h1{
+    text-align:center;
+    font-size:clamp(1.5rem,3.2vw,2.2rem);
+    font-weight:700;
+    margin:0 0 8px;
+    letter-spacing:-.3px;
+  }
+  .sub{
+    text-align:center;
+    color:var(--muted);
+    max-width:760px;
+    margin:0 auto 20px;
+    line-height:1.55;
+    font-size:.98rem;
+  }
+  .sub b{color:var(--txt)}
+
+  .mode-switch{
+    display:inline-flex;gap:2px;margin:0 auto 24px;padding:4px;
+    background:#e8e8ed;border-radius:980px;
+  }
+  .mode-switch button{padding:8px 24px;border-radius:980px;font-size:.95rem;background:transparent;box-shadow:none}
+  .mode-switch button:hover{background:rgba(0,0,0,.04)}
+  .mode-switch button.active{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14)}
+
+  .stage{
+    width:100%;
+    max-width:860px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:26px 24px 28px;
+    box-shadow:0 10px 40px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+  }
+
+  /* ---- Clara : multiplication posée à gauche, grille de points à droite ---- */
+  .mul-layout{
+    display:grid;
+    grid-template-columns:auto auto;
+    gap:38px;
+    align-items:center;justify-content:center;
+    width:100%;
+  }
+  .mul-calc{
+    display:flex;flex-direction:column;align-items:flex-end;gap:7px;
+    font-variant-numeric:tabular-nums;
+  }
+  .mul-line{
+    display:flex;align-items:center;justify-content:flex-end;gap:12px;
+    font-size:clamp(1.9rem,5.4vw,2.7rem);font-weight:800;line-height:1;
+  }
+  .mul-line .op{display:flex;align-items:center;color:var(--muted);font-size:.8em}
+  .mul-line .num{display:inline-flex;align-items:center;color:var(--blue)}
+  .mul-line .num.factor{color:var(--carry)}
+  .mul-line .num.res{color:var(--ok-text)}
+  .mul-line .num.res.q{color:var(--muted)}
+  .mul-line .num.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+
+  .mul-rule{height:3px;border-radius:3px;background:var(--line);align-self:stretch}
+
+  /* grille de points : a rangées de b points */
+  .dotgrid{display:flex;flex-direction:column;gap:7px}
+  .drow{display:flex;gap:7px}
+  .dot{
+    width:17px;height:17px;border-radius:50%;
+    background:#a8dcff;border:2px solid #4aa3e0;box-sizing:border-box;
+    transition:background .15s,border-color .15s;
+  }
+  .dot.gap{margin-right:9px}
+  .dotgrid.pop .dot{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+  .icap{color:var(--muted);font-size:.85rem;font-weight:500;text-align:center;min-height:20px}
+
+  /* ---- Andrea : chrono ---- */
+  .chessclock{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+  .clock-bonus{
+    position:absolute;top:-4px;left:50%;transform:translate(-50%,8px);
+    color:var(--ok-text);font-weight:800;font-size:1.15rem;
+    opacity:0;pointer-events:none;
+  }
+  .clock-bonus.show{animation:bonusPop 1s ease}
+  @keyframes bonusPop{
+    0%{opacity:0;transform:translate(-50%,8px) scale(.7)}
+    25%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
+    70%{opacity:1;transform:translate(-50%,-6px) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-22px) scale(1)}
+  }
+  .clock-face{
+    font-size:clamp(5.2rem,20vw,8.8rem);
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    color:var(--blue);
+    line-height:1;
+    letter-spacing:-1px;
+    transition:color .2s;
+  }
+  .clock-face.low{color:var(--carry);animation:pulse .8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .clock-lbl{color:var(--muted);font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .clock-bar{position:relative;height:14px;width:100%;max-width:420px;border-radius:999px;background:#e8e8ed;border:1px solid var(--line);overflow:hidden}
+  .clock-bar i{position:absolute;top:0;left:0;bottom:0;width:100%;background:linear-gradient(90deg,#34c759,#ff9500);transition:width .1s linear}
+  .clock-bar.low i{background:linear-gradient(90deg,#ff9500,#ff375f)}
+  .cm2-problem{
+    font-size:clamp(2.2rem,8vw,3.6rem);
+    font-weight:800;
+    color:var(--txt);
+    font-variant-numeric:tabular-nums;
+    text-align:center;
+    letter-spacing:-.5px;
+  }
+  .cm2-problem .op{color:var(--carry)}
+  .cm2-problem .eq{color:var(--muted)}
+  .score-row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;font-weight:600;color:var(--muted)}
+  .score-row b{font-size:1.35rem;color:var(--on)}
+  .score-row .best b{color:var(--blue)}
+
+  /* ---- clavier ---- */
+  .keypad{display:flex;flex-direction:column;gap:12px;align-items:center}
+  .answer{
+    width:100%;max-width:320px;text-align:center;
+    font-size:1.9rem;font-weight:700;color:var(--blue);
+    background:#fff;border:2px solid var(--line);border-radius:14px;
+    padding:10px;letter-spacing:1px;min-height:64px;
+    font-variant-numeric:tabular-nums;
+  }
+  .answer .ph{color:#c7c7cc;font-weight:500}
+  .answer.shake{animation:shake .4s ease}
+  .keys{display:grid;grid-template-columns:repeat(3,66px);gap:10px;justify-content:center}
+  .keys button{
+    font-size:1.35rem;font-weight:600;padding:14px 0;border-radius:14px;
+    background:#f2f2f7;border:1px solid var(--line);
+  }
+  .keys button:active{transform:scale(.96)}
+  .keys button.primary{background:var(--blue);color:#fff;border-color:transparent}
+  .keys button[data-k="del"]{grid-column:1}
+  .keys button[data-k="0"]{grid-column:2}
+  .keys button[data-k="ok"]{grid-column:3}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-9px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(4px)}
+  }
+
+  /* ---- corgi ---- */
+  .corgi-zone{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:170px;width:100%}
+  .corgi-wrap{transform-origin:50% 100%;display:flex;flex-direction:column;align-items:center}
+  .corgi-wrap.hop{animation:hop .75s ease}
+  .corgi-photo{width:150px;height:auto;display:block;animation:bob 2.8s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes hop{
+    0%{transform:translateY(0) rotate(0)}
+    22%{transform:translateY(-46px) rotate(-5deg) scale(1.04)}
+    45%{transform:translateY(0) rotate(2deg)}
+    62%{transform:translateY(-24px) rotate(-3deg)}
+    82%{transform:translateY(0) rotate(1deg)}
+    100%{transform:translateY(0) rotate(0)}
+  }
+  .speech{
+    position:absolute;top:0;left:50%;transform:translateX(-40%) scale(.6);
+    background:#ffffff;color:var(--txt);font-weight:600;font-size:1rem;
+    padding:8px 14px;border-radius:14px;border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(0,0,0,.14);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    white-space:nowrap;
+  }
+  .speech::after{
+    content:"";position:absolute;left:22px;bottom:-8px;
+    border:8px solid transparent;border-top-color:#ffffff;border-bottom:0;
+  }
+  .speech.show{opacity:1;transform:translateX(-40%) scale(1)}
+
+  .msg{text-align:center;font-weight:600;min-height:26px;line-height:1.4;color:var(--muted);transition:color .15s}
+  .msg.ok{color:var(--ok-text)}
+  .msg.no{color:var(--carry)}
+
+  .buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+  button{
+    font:inherit;font-weight:600;
+    padding:11px 20px;border-radius:12px;cursor:pointer;
+    color:var(--txt);background:#f2f2f7;
+    border:1px solid transparent;transition:background .15s,transform .12s,box-shadow .15s;
+  }
+  button:hover{background:#e8e8ed}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--blue);color:#fff;font-size:1.02rem;padding:12px 26px;box-shadow:0 4px 14px rgba(0,113,227,.3)}
+  button.primary:hover{background:var(--blue-dark)}
+  button:disabled{opacity:.5;cursor:default;transform:none}
+
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+  .hidden{display:none!important}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px;line-height:1.7}
+  footer a{color:var(--blue);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
+  @media(max-width:680px){
+    .mul-layout{grid-template-columns:1fr;gap:20px}
+    .mul-calc{align-items:center}
+    .dot{width:14px;height:14px}
+    .drow{gap:6px}
+    .dot.gap{margin-right:7px}
+    .dotgrid{gap:6px}
+    .corgi-zone{min-height:140px}
+    .corgi-photo{width:120px}
+    .keys{grid-template-columns:repeat(3,58px)}
+  }
+</style>
+</head>
+<body>
+
+  <h1>Les tables de multiplication</h1>
+  <p class="sub" id="sub">Choisis ton niveau pour commencer.</p>
+
+  <nav class="mode-switch" aria-label="Choix du niveau">
+    <button type="button" id="btnClara" class="active">Clara</button>
+    <button type="button" id="btnAndrea">Andrea</button>
+  </nav>
+
+<!-- ===================== CLARA ===================== -->
+<div id="modeClara">
+  <div class="stage">
+    <div class="mul-layout">
+      <div class="mul-calc" id="mulCalc">
+        <div class="mul-line"><span class="num" id="mulNumA"></span></div>
+        <div class="mul-line"><span class="op" id="mulOp">×</span><span class="num factor" id="mulNumB"></span></div>
+        <div class="mul-rule"></div>
+        <div class="mul-line"><span class="num res q" id="mulRes"></span></div>
+      </div>
+      <div class="dotgrid" id="mulGrid"></div>
+    </div>
+    <div class="icap" id="mulCap"></div>
+
+    <div class="keypad">
+      <div class="answer" id="mulAnswer"><span class="ph">?</span></div>
+      <div class="keys" id="mulKeys">
+        <button type="button" data-k="1">1</button>
+        <button type="button" data-k="2">2</button>
+        <button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button>
+        <button type="button" data-k="5">5</button>
+        <button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button>
+        <button type="button" data-k="8">8</button>
+        <button type="button" data-k="9">9</button>
+        <button type="button" data-k="0">0</button>
+        <button type="button" data-k="del">⌫</button>
+        <button type="button" data-k="ok" class="primary">✓</button>
+      </div>
+    </div>
+
+    <div class="corgi-zone">
+      <div class="speech" id="speechClara">Bravo !</div>
+      <div class="corgi-wrap" id="corgiClara">
+        <img class="corgi-photo" id="corgiClaraImg" src="Content.png" alt="Corgi">
+      </div>
+    </div>
+
+    <p class="msg" id="msgClara"></p>
+
+    <div class="buttons">
+      <button type="button" class="primary" id="claraNew">Nouveau calcul</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ANDREA ===================== -->
+<div id="modeAndrea" class="hidden">
+  <div class="stage">
+    <div class="chessclock">
+      <div class="clock-bonus" id="andreaBonus">+10 s</div>
+      <div class="clock-face" id="andreaClock">60.0</div>
+      <div class="clock-lbl">secondes de réflexion</div>
+      <div class="clock-bar" id="andreaBar"><i></i></div>
+    </div>
+
+    <div class="cm2-problem" id="andreaProblem">Appuie sur « Commencer »</div>
+
+    <div class="keypad">
+      <div class="answer" id="andreaAnswer"><span class="ph">?</span></div>
+      <div class="keys" id="andreaKeys">
+        <button type="button" data-k="1">1</button>
+        <button type="button" data-k="2">2</button>
+        <button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button>
+        <button type="button" data-k="5">5</button>
+        <button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button>
+        <button type="button" data-k="8">8</button>
+        <button type="button" data-k="9">9</button>
+        <button type="button" data-k="0">0</button>
+        <button type="button" data-k="del">⌫</button>
+        <button type="button" data-k="ok" class="primary">✓</button>
+      </div>
+    </div>
+
+    <div class="score-row">
+      <span class="pts">Points : <b id="andreaScore">0</b></span>
+      <span class="best">Meilleur : <b id="andreaBest">0</b></span>
+    </div>
+
+    <div class="corgi-zone">
+      <div class="speech" id="speechAndrea">Bravo !</div>
+      <div class="corgi-wrap" id="corgiAndrea">
+        <img class="corgi-photo" id="corgiAndreaImg" src="Content.png" alt="Corgi">
+      </div>
+    </div>
+
+    <p class="msg" id="msgAndrea"></p>
+
+    <div class="buttons">
+      <button type="button" class="primary" id="andreaStart">Commencer</button>
+    </div>
+  </div>
+</div>
+
+  <footer>
+    <a href="index.html">Accueil</a> &nbsp;•&nbsp;
+    <a href="calcul.html">Le calcul mental</a> &nbsp;•&nbsp;
+    <a href="horloge.html">L'horloge</a> &nbsp;•&nbsp;
+    <a href="mots.html?mode=dictee">La dictée</a> &nbsp;•&nbsp;
+    <a href="multiplications-mobile.html?mobile=1">Version mobile</a>
+  </footer>
+
+<canvas id="confetti"></canvas>
+
+<script src="corgi.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- sons des récompenses ---------- */
+  var SOUNDS = ["fanfare.mp3", "chien.mp3"];
+  var soundPool = SOUNDS.map(function(src){
+    var a = new Audio(src); a.preload = "auto"; return a;
+  });
+  function playBravoSound(){
+    if (!soundPool.length) return;
+    try {
+      var a = soundPool[Math.floor(Math.random() * soundPool.length)];
+      a.currentTime = 0;
+      var p = a.play();
+      if (p && p.catch) p.catch(function(){});
+    } catch (e) {}
+  }
+
+  /* ---------- confettis ---------- */
+  var canvas = document.getElementById("confetti");
+  var ctx = canvas.getContext("2d");
+  var parts = [], rafConf = null;
+  var COLORS = ["#ff5c8a", "#ffd23f", "#4ade80", "#5aa9ff", "#f97316", "#a855f7", "#ffffff"];
+  function sizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+  function launchConfetti(){
+    for (var i = 0; i < 150; i++){
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        w: 6 + Math.random() * 8,
+        h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+    if (!rafConf) rafConf = requestAnimationFrame(tickConfetti);
+  }
+  function tickConfetti(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.vx *= 0.995; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      if (p.y > canvas.height + 50) parts.splice(i, 1);
+    }
+    if (parts.length) rafConf = requestAnimationFrame(tickConfetti);
+    else { rafConf = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+
+  /* ---------- helpers ---------- */
+  function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  function corgiHop(el){ el.classList.remove("hop"); void el.offsetWidth; el.classList.add("hop"); }
+  function showSpeech(el, text){
+    el.textContent = text; el.classList.add("show");
+    setTimeout(function(){ el.classList.remove("show"); }, 1700);
+  }
+  function makeKeypad(answerEl, keysEl, onSubmit){
+    var value = "";
+    function render(){
+      if (value === ""){ answerEl.innerHTML = '<span class="ph">?</span>'; }
+      else { answerEl.textContent = value; }
+    }
+    function input(k){
+      if (k === "del"){ value = value.slice(0, -1); }
+      else if (k === "ok"){ onSubmit(); return; }
+      else if (/^[0-9]$/.test(k)){
+        if (value.length >= 3) return;
+        if (value === "0") value = "";
+        value += k;
+      }
+      render();
+    }
+    keysEl.addEventListener("click", function(evt){
+      var b = evt.target.closest("button[data-k]");
+      if (!b) return;
+      input(b.getAttribute("data-k"));
+    });
+    render();
+    return {
+      input: input,
+      reset: function(){ value = ""; render(); },
+      value: function(){ return value; },
+      shake: function(){ answerEl.classList.remove("shake"); void answerEl.offsetWidth; answerEl.classList.add("shake"); }
+    };
+  }
+
+  var level = "clara";
+  var btnClara = document.getElementById("btnClara");
+  var btnAndrea = document.getElementById("btnAndrea");
+  var modeClara = document.getElementById("modeClara");
+  var modeAndrea = document.getElementById("modeAndrea");
+  var sub = document.getElementById("sub");
+
+  /* =========================================================
+     CLARA : petites multiplications avec une grille de points
+     ========================================================= */
+  var mulGrid = document.getElementById("mulGrid");
+  var mulNumA = document.getElementById("mulNumA");
+  var mulNumB = document.getElementById("mulNumB");
+  var mulOp = document.getElementById("mulOp");
+  var mulRes = document.getElementById("mulRes");
+  var mulCap = document.getElementById("mulCap");
+  var msgClara = document.getElementById("msgClara");
+  var corgiClara = document.getElementById("corgiClara");
+  var corgiClaraCtl = Corgi.create(document.getElementById("corgiClaraImg"));
+  var speechClara = document.getElementById("speechClara");
+
+  var clara = { a:0, b:0, ans:0, answered:false, nextTimer:null };
+  var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara);
+
+  var TABLES_MIN = 1, TABLES_MAX = 10;   /* toutes les tables, de ×1 à ×10 */
+
+  /* grille : a rangées de b points (séparés par paquets de 5) */
+  function renderDotGrid(){
+    var html = "", r, c;
+    for (r = 0; r < clara.a; r++){
+      html += '<div class="drow">';
+      for (c = 0; c < clara.b; c++){
+        html += '<span class="dot' + ((c + 1) % 5 === 0 && c !== clara.b - 1 ? " gap" : "") + '"></span>';
+      }
+      html += "</div>";
+    }
+    mulGrid.innerHTML = html;
+  }
+
+  function renderClara(reveal){
+    renderDotGrid();
+    mulNumA.textContent = clara.a;
+    mulNumB.textContent = clara.b;
+    mulOp.textContent = "×";
+    if (reveal){
+      mulRes.textContent = clara.ans;
+      mulRes.classList.remove("q");
+      mulRes.classList.remove("pop"); void mulRes.offsetWidth; mulRes.classList.add("pop");
+    } else {
+      mulRes.textContent = "?";
+      mulRes.classList.add("q");
+      mulRes.classList.remove("pop");
+    }
+  }
+
+  function newClara(){
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    clara.answered = false;
+    clara.a = rndInt(TABLES_MIN, TABLES_MAX);
+    clara.b = rndInt(TABLES_MIN, TABLES_MAX);
+    clara.ans = clara.a * clara.b;
+
+    renderClara(false);
+
+    mulCap.textContent = "La table de " + clara.a + " : " + clara.a + " rangées de " + clara.b +
+      " points. Combien de points en tout ?";
+
+    claraKeypad.reset();
+    msgClara.textContent = "";
+    msgClara.className = "msg";
+    corgiClaraCtl.idle();
+  }
+
+  function checkClara(){
+    if (clara.answered) return;
+    var raw = claraKeypad.value();
+    if (raw === "") return;
+    var v = parseInt(raw, 10);
+    if (v === clara.ans){
+      clara.answered = true;
+      renderClara(true);
+      playBravoSound();
+      launchConfetti();
+      corgiHop(corgiClara);
+      corgiClaraCtl.happy();
+      showSpeech(speechClara, "Bravo !");
+      msgClara.textContent = "Bravo, c'est juste !";
+      msgClara.className = "msg ok";
+      clara.nextTimer = setTimeout(newClara, 2400);
+    } else {
+      claraKeypad.shake();
+      claraKeypad.reset();
+      corgiClaraCtl.sad();
+      msgClara.textContent = "Pas tout à fait… réessaie !";
+      msgClara.className = "msg no";
+    }
+  }
+
+  document.getElementById("claraNew").addEventListener("click", newClara);
+
+  /* =========================================================
+     ANDREA : 1 minute de réflexion, 1 point par bonne réponse
+     ========================================================= */
+  var andreaClock = document.getElementById("andreaClock");
+  var andreaBar = document.getElementById("andreaBar");
+  var andreaBarFill = andreaBar.querySelector("i");
+  var andreaProblem = document.getElementById("andreaProblem");
+  var andreaScore = document.getElementById("andreaScore");
+  var andreaBest = document.getElementById("andreaBest");
+  var andreaStart = document.getElementById("andreaStart");
+  var msgAndrea = document.getElementById("msgAndrea");
+  var corgiAndrea = document.getElementById("corgiAndrea");
+  var corgiAndreaCtl = Corgi.create(document.getElementById("corgiAndreaImg"));
+  var speechAndrea = document.getElementById("speechAndrea");
+  var andreaBonus = document.getElementById("andreaBonus");
+  var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
+
+  var DURATION = 60000;
+  var BONUS_MS = 10000;
+  var BEST_KEY = "multiplication_cm2_best";
+  var andrea = {
+    a:0, b:0, ans:0,
+    score:0,
+    best: parseInt(localStorage.getItem(BEST_KEY), 10) || 0,
+    active:false,
+    running:false,
+    remaining:DURATION,
+    lastTs:null,
+    raf:null,
+    nextTimer:null,
+    wasRunning:false
+  };
+
+  andreaBest.textContent = andrea.best;
+
+  function renderClock(){
+    var s = andrea.remaining / 1000;
+    andreaClock.textContent = s.toFixed(1);
+    var pct = Math.max(0, andrea.remaining / DURATION) * 100;
+    andreaBarFill.style.width = pct + "%";
+    var low = andrea.remaining <= 10000;
+    andreaClock.classList.toggle("low", low);
+    andreaBar.classList.toggle("low", low);
+  }
+
+  function showBonus(){
+    andreaBonus.classList.remove("show");
+    void andreaBonus.offsetWidth;
+    andreaBonus.classList.add("show");
+  }
+
+  function clockTick(ts){
+    if (!andrea.running) return;
+    if (andrea.lastTs == null) andrea.lastTs = ts;
+    var dt = ts - andrea.lastTs;
+    andrea.lastTs = ts;
+    andrea.remaining -= dt;
+    if (andrea.remaining <= 0){
+      andrea.remaining = 0;
+      renderClock();
+      endAndrea();
+      return;
+    }
+    renderClock();
+    andrea.raf = requestAnimationFrame(clockTick);
+  }
+
+  function startClock(){
+    if (!andrea.active || andrea.running) return;
+    andrea.running = true;
+    andrea.lastTs = null;
+    andrea.raf = requestAnimationFrame(clockTick);
+  }
+
+  function stopClock(){
+    andrea.running = false;
+    if (andrea.raf) cancelAnimationFrame(andrea.raf);
+    andrea.raf = null;
+  }
+
+  function newAndreaProblem(){
+    andrea.a = rndInt(TABLES_MIN, TABLES_MAX);
+    andrea.b = rndInt(TABLES_MIN, TABLES_MAX);
+    andrea.ans = andrea.a * andrea.b;
+    andreaProblem.innerHTML = andrea.a + ' <span class="op">×</span> ' +
+      andrea.b + ' <span class="eq">=</span> ?';
+    andreaKeypad.reset();
+    msgAndrea.textContent = "";
+    msgAndrea.className = "msg";
+  }
+
+  function startAndrea(){
+    if (andrea.nextTimer){ clearTimeout(andrea.nextTimer); andrea.nextTimer = null; }
+    stopClock();
+    andrea.active = true;
+    andrea.score = 0;
+    andrea.remaining = DURATION;
+    andreaKeypad.reset();
+    andreaScore.textContent = "0";
+    renderClock();
+    newAndreaProblem();
+    andreaStart.textContent = "Recommencer";
+    startClock();
+  }
+
+  function checkAndrea(){
+    if (!andrea.active || !andrea.running) return;
+    var raw = andreaKeypad.value();
+    if (raw === "") return;
+    var v = parseInt(raw, 10);
+    if (v === andrea.ans){
+      stopClock();
+      andrea.score++;
+      andrea.remaining = Math.min(DURATION, andrea.remaining + BONUS_MS);
+      renderClock();
+      andreaScore.textContent = andrea.score;
+      playBravoSound();
+      launchConfetti();
+      corgiHop(corgiAndrea);
+      corgiAndreaCtl.happy();
+      showSpeech(speechAndrea, "Un point !");
+      showBonus();
+      msgAndrea.textContent = "Bravo, +1 point et +10 secondes !";
+      msgAndrea.className = "msg ok";
+      andrea.nextTimer = setTimeout(function(){
+        if (!andrea.active) return;
+        newAndreaProblem();
+        startClock();
+      }, 650);
+    } else {
+      andreaKeypad.shake();
+      andreaKeypad.reset();
+      msgAndrea.textContent = "Non… cherche encore, le chrono tourne !";
+      msgAndrea.className = "msg no";
+    }
+  }
+
+  function endAndrea(){
+    if (andrea.nextTimer){ clearTimeout(andrea.nextTimer); andrea.nextTimer = null; }
+    stopClock();
+    andrea.active = false;
+    andreaStart.textContent = "Rejouer";
+    var newBest = false;
+    if (andrea.score > andrea.best){
+      andrea.best = andrea.score;
+      andreaBest.textContent = andrea.best;
+      try { localStorage.setItem(BEST_KEY, String(andrea.best)); } catch (e) {}
+      newBest = true;
+    }
+    if (andrea.score === 0){
+      corgiAndreaCtl.cry();
+      msgAndrea.textContent = "Temps écoulé ! Essaie encore, tu feras mieux.";
+      msgAndrea.className = "msg no";
+    } else if (newBest){
+      corgiAndreaCtl.happy();
+      showSpeech(speechAndrea, "Nouveau record !");
+      msgAndrea.textContent = "Temps écoulé ! " + andrea.score + " point" +
+        (andrea.score > 1 ? "s" : "") + " — nouveau record !";
+      msgAndrea.className = "msg ok";
+      launchConfetti();
+    } else {
+      corgiAndreaCtl.happy();
+      msgAndrea.textContent = "Temps écoulé ! Tu as marqué " + andrea.score + " point" +
+        (andrea.score > 1 ? "s" : "") + ".";
+      msgAndrea.className = "msg ok";
+    }
+  }
+
+  andreaStart.addEventListener("click", startAndrea);
+
+  /* mise en pause si l'onglet est masqué */
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden){
+      if (andrea.running){ andrea.wasRunning = true; stopClock(); }
+    } else if (andrea.active && andrea.wasRunning){
+      andrea.wasRunning = false;
+      startClock();
+    }
+  });
+
+  /* =========================================================
+     Bascule de niveau + clavier physique
+     ========================================================= */
+  function setLevel(l){
+    var prev = level;
+    var isClara = (l === "clara");
+
+    /* on quitte le mode Andrea en pleine partie : on met le chrono en pause */
+    if (prev === "andrea" && isClara && andrea.running){
+      andrea.wasRunning = true;
+      stopClock();
+    }
+
+    level = l;
+    modeClara.classList.toggle("hidden", !isClara);
+    modeAndrea.classList.toggle("hidden", isClara);
+    btnClara.classList.toggle("active", isClara);
+    btnAndrea.classList.toggle("active", !isClara);
+    sub.innerHTML = isClara
+      ? "Clara : les <b>tables de multiplication</b>, avec une grille de points pour bien voir."
+      : "Andrea : toutes les <b>tables de multiplication</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
+
+    /* on revient sur une partie en pause : on relance le chrono */
+    if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
+      andrea.wasRunning = false;
+      startClock();
+    }
+  }
+
+  btnClara.addEventListener("click", function(){ setLevel("clara"); });
+  btnAndrea.addEventListener("click", function(){ setLevel("andrea"); });
+
+  document.addEventListener("keydown", function(evt){
+    if (level === "clara"){
+      if (/^[0-9]$/.test(evt.key)) claraKeypad.input(evt.key);
+      else if (evt.key === "Backspace"){ evt.preventDefault(); claraKeypad.input("del"); }
+      else if (evt.key === "Enter"){ evt.preventDefault(); checkClara(); }
+    } else {
+      if (!andrea.active) return;
+      if (/^[0-9]$/.test(evt.key)) andreaKeypad.input(evt.key);
+      else if (evt.key === "Backspace"){ evt.preventDefault(); andreaKeypad.input("del"); }
+      else if (evt.key === "Enter"){ evt.preventDefault(); checkAndrea(); }
+    }
+  });
+
+  /* ---------- init ---------- */
+  renderClock();
+  setLevel("clara");
+  newClara();
+})();
+</script>
+</body>
+</html>
