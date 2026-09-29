@@ -128,7 +128,7 @@
 
   /* ---- Andrea : chrono ---- */
   .chessclock{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-  /* ---- bonus « +3 s » qui monte au-dessus du corgi ---- */
+  /* ---- bonus « +2 s » qui monte au-dessus du corgi ---- */
   .bonus-float{
     position:absolute;top:0;left:50%;
     transform:translate(-50%,16px) scale(.7);
@@ -359,7 +359,7 @@
 
     <div class="corgi-zone">
       <div class="speech" id="speechAndrea">Bravo !</div>
-      <div class="bonus-float" id="andreaBonus">+3 s</div>
+      <div class="bonus-float" id="andreaBonus">+2 s</div>
       <div class="corgi-wrap" id="corgiAndrea">
         <img class="corgi-photo" id="corgiAndreaImg" src="Content.png" alt="Corgi">
       </div>
@@ -602,7 +602,7 @@
   var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
 
   var DURATION = 60000;
-  var BONUS_MS = 3000;
+  var BONUS_MS = 2000;
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
     a:0, b:0, ans:0,
@@ -706,7 +706,7 @@
       corgiAndreaCtl.happy();
       showSpeech(speechAndrea, "Un point !");
       showBonus();
-      msgAndrea.textContent = "Bravo, +1 point et +3 secondes !";
+      msgAndrea.textContent = "Bravo, +1 point et +2 secondes !";
       msgAndrea.className = "msg ok";
       andrea.nextTimer = setTimeout(function(){
         if (!andrea.active) return;
@@ -784,7 +784,7 @@
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
       ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir."
-      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+3 secondes</b> à chaque bonne réponse !";
+      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+2 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
