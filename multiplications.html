@@ -502,7 +502,7 @@
   var clara = { a:0, b:0, ans:0, answered:false, nextTimer:null };
   var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara);
 
-  var TABLES_MIN = 1, TABLES_MAX = 10;   /* toutes les tables, de ×1 à ×10 */
+  var TABLES_MIN = 2, TABLES_MAX = 9;   /* tables de ×2 à ×9 */
 
   /* grille : a rangées de b points (séparés par paquets de 5) */
   function renderDotGrid(){
@@ -777,8 +777,8 @@
     btnClara.classList.toggle("active", isClara);
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
-      ? "Clara : les <b>tables de multiplication</b>, avec une grille de points pour bien voir."
-      : "Andrea : toutes les <b>tables de multiplication</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
+      ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir."
+      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
