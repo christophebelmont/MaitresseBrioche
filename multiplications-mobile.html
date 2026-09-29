@@ -302,12 +302,15 @@
   var overlay = document.getElementById("overlay");
   var overlayImg = document.getElementById("overlayImg");
 
-  var DURATION = 60000, BONUS = 5000;
-  var TABLES_MIN = 2, TABLES_MAX = 9;   /* tables de ×2 à ×9 */
+  var DURATION = 60000, BONUS = 3000;
   var BEST_CLARA = "multiplication_clara_record";
   var BEST_ANDREA = "multiplication_cm2_best";
 
   function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  /* tables de ×2 à ×9, avec les chiffres de 4 à 9 favorisés (50 % de plus
+     de chances que les chiffres 2 et 3) */
+  var TABLE_POOL = [2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9];
+  function rndTable(){ return TABLE_POOL[Math.floor(Math.random() * TABLE_POOL.length)]; }
   function saveInt(key, v){ try { localStorage.setItem(key, String(v)); } catch (e) {} }
 
   /* ---------- état ---------- */
@@ -406,8 +409,8 @@
     if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
     clara.locked = false;
     clara.value = "";
-    clara.a = rndInt(TABLES_MIN, TABLES_MAX);
-    clara.b = rndInt(TABLES_MIN, TABLES_MAX);
+    clara.a = rndTable();
+    clara.b = rndTable();
     clara.ans = clara.a * clara.b;
     renderClara();
   }
@@ -430,8 +433,8 @@
   function newAndreaProblem(){
     andrea.locked = false;
     andrea.value = "";
-    andrea.a = rndInt(TABLES_MIN, TABLES_MAX);
-    andrea.b = rndInt(TABLES_MIN, TABLES_MAX);
+    andrea.a = rndTable();
+    andrea.b = rndTable();
     andrea.ans = andrea.a * andrea.b;
     renderAndreaProblem();
   }

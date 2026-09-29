@@ -325,7 +325,7 @@
 <div id="modeAndrea" class="hidden">
   <div class="stage">
     <div class="chessclock">
-      <div class="clock-bonus" id="andreaBonus">+5 s</div>
+      <div class="clock-bonus" id="andreaBonus">+3 s</div>
       <div class="clock-face" id="andreaClock">60.0</div>
       <div class="clock-lbl">secondes de réflexion</div>
       <div class="clock-bar" id="andreaBar"><i></i></div>
@@ -443,6 +443,10 @@
 
   /* ---------- helpers ---------- */
   function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  /* tables de ×2 à ×9, avec les chiffres de 4 à 9 favorisés (50 % de plus
+     de chances que les chiffres 2 et 3) */
+  var TABLE_POOL = [2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9];
+  function rndTable(){ return TABLE_POOL[Math.floor(Math.random() * TABLE_POOL.length)]; }
   function corgiHop(el){ el.classList.remove("hop"); void el.offsetWidth; el.classList.add("hop"); }
   function showSpeech(el, text){
     el.textContent = text; el.classList.add("show");
@@ -502,7 +506,7 @@
   var clara = { a:0, b:0, ans:0, answered:false, nextTimer:null };
   var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara);
 
-  var TABLES_MIN = 2, TABLES_MAX = 9;   /* tables de ×2 à ×9 */
+  /* tables de ×2 à ×9 (chiffres 4-9 favorisés), voir rndTable() */
 
   /* grille : a rangées de b points (séparés par paquets de 5) */
   function renderDotGrid(){
@@ -536,8 +540,8 @@
   function newClara(){
     if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
     clara.answered = false;
-    clara.a = rndInt(TABLES_MIN, TABLES_MAX);
-    clara.b = rndInt(TABLES_MIN, TABLES_MAX);
+    clara.a = rndTable();
+    clara.b = rndTable();
     clara.ans = clara.a * clara.b;
 
     renderClara(false);
@@ -596,7 +600,7 @@
   var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
 
   var DURATION = 60000;
-  var BONUS_MS = 5000;
+  var BONUS_MS = 3000;
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
     a:0, b:0, ans:0,
@@ -659,8 +663,8 @@
   }
 
   function newAndreaProblem(){
-    andrea.a = rndInt(TABLES_MIN, TABLES_MAX);
-    andrea.b = rndInt(TABLES_MIN, TABLES_MAX);
+    andrea.a = rndTable();
+    andrea.b = rndTable();
     andrea.ans = andrea.a * andrea.b;
     andreaProblem.innerHTML = andrea.a + ' <span class="op">×</span> ' +
       andrea.b + ' <span class="eq">=</span> ?';
@@ -700,7 +704,7 @@
       corgiAndreaCtl.happy();
       showSpeech(speechAndrea, "Un point !");
       showBonus();
-      msgAndrea.textContent = "Bravo, +1 point et +5 secondes !";
+      msgAndrea.textContent = "Bravo, +1 point et +3 secondes !";
       msgAndrea.className = "msg ok";
       andrea.nextTimer = setTimeout(function(){
         if (!andrea.active) return;
@@ -778,7 +782,7 @@
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
       ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir."
-      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+5 secondes</b> à chaque bonne réponse !";
+      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+3 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
