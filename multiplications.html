@@ -325,7 +325,7 @@
 <div id="modeAndrea" class="hidden">
   <div class="stage">
     <div class="chessclock">
-      <div class="clock-bonus" id="andreaBonus">+10 s</div>
+      <div class="clock-bonus" id="andreaBonus">+5 s</div>
       <div class="clock-face" id="andreaClock">60.0</div>
       <div class="clock-lbl">secondes de réflexion</div>
       <div class="clock-bar" id="andreaBar"><i></i></div>
@@ -596,7 +596,7 @@
   var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
 
   var DURATION = 60000;
-  var BONUS_MS = 10000;
+  var BONUS_MS = 5000;
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
     a:0, b:0, ans:0,
@@ -700,7 +700,7 @@
       corgiAndreaCtl.happy();
       showSpeech(speechAndrea, "Un point !");
       showBonus();
-      msgAndrea.textContent = "Bravo, +1 point et +10 secondes !";
+      msgAndrea.textContent = "Bravo, +1 point et +5 secondes !";
       msgAndrea.className = "msg ok";
       andrea.nextTimer = setTimeout(function(){
         if (!andrea.active) return;
@@ -778,7 +778,7 @@
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
       ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir."
-      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+10 secondes</b> à chaque bonne réponse !";
+      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+5 secondes</b> à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
