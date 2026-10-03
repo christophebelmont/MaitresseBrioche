@@ -213,7 +213,6 @@
       <div class="line"><span class="mnum res q" id="mRes"></span></div>
     </div>
     <div class="dotgrid" id="mGrid"></div>
-    <div class="hint" id="mClaraHint"></div>
   </div>
 
   <!-- ---- Andrea ---- -->
@@ -310,7 +309,6 @@
   var claraVialLiquid = document.getElementById("claraVialLiquid");
   var andreaVial = document.getElementById("andreaVial");
   var andreaVialLiquid = document.getElementById("andreaVialLiquid");
-  var mClaraHint = document.getElementById("mClaraHint");
   var btnClara = document.getElementById("btnClara");
   var btnAndrea = document.getElementById("btnAndrea");
   var stageClara = document.getElementById("stageClara");
@@ -477,7 +475,6 @@
     claraStopClock();
     clara.active = true; clara.paused = false;
     clara.count = 0; clara.remaining = DURATION;
-    mClaraHint.textContent = "";
     updateClaraHeader();
     renderClaraClock();
     newClara();
@@ -490,7 +487,6 @@
     if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
     if (clara.count > clara.best){ clara.best = clara.count; saveInt(BEST_CLARA, clara.best); }
     updateClaraHeader();
-    mClaraHint.textContent = "Score : " + clara.count + ". Touche la fiole pour rejouer";
     flashCorgi(clara.count === 0 ? "cry" : "happy");
     if (clara.count > 0) launchConfetti();
   }
