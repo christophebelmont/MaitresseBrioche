@@ -126,9 +126,13 @@
   .dotgrid.pop .dot{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
   .icap{color:var(--muted);font-size:.85rem;font-weight:500;text-align:center;min-height:20px}
 
-  /* ---- Andrea : chrono ---- */
-  .chessclock{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-  /* ---- bonus « +1 s » qui monte au-dessus du corgi ---- */
+  /* ---- Andrea : fiole de liquide (remplace le chrono) ---- */
+  .andrea-main{position:relative;width:100%;display:flex;align-items:center;justify-content:center;min-height:132px}
+  .vial{position:absolute;left:0;top:50%;transform:translateY(-50%);width:52px;height:auto;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.12))}
+  .vial-bg{fill:rgba(180,205,230,.25)}
+  .vial-glass{fill:none;stroke:#aeb8c6;stroke-width:3;stroke-linejoin:round}
+  .vial.low #andreaVialLiquid{fill:#ff375f}
+  /* ---- bonus « +10 s » qui monte au-dessus du corgi ---- */
   .bonus-float{
     position:absolute;top:0;left:50%;
     transform:translate(-50%,16px) scale(.7);
@@ -142,21 +146,6 @@
     70%{opacity:1;transform:translate(-50%,-38px) scale(1)}
     100%{opacity:0;transform:translate(-50%,-80px) scale(1)}
   }
-  .clock-face{
-    font-size:clamp(5.2rem,20vw,8.8rem);
-    font-weight:800;
-    font-variant-numeric:tabular-nums;
-    color:var(--blue);
-    line-height:1;
-    letter-spacing:-1px;
-    transition:color .2s;
-  }
-  .clock-face.low{color:var(--carry);animation:pulse .8s ease-in-out infinite}
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-  .clock-lbl{color:var(--muted);font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
-  .clock-bar{position:relative;height:14px;width:100%;max-width:420px;border-radius:999px;background:#e8e8ed;border:1px solid var(--line);overflow:hidden}
-  .clock-bar i{position:absolute;top:0;left:0;bottom:0;width:100%;background:linear-gradient(90deg,#34c759,#ff9500);transition:width .1s linear}
-  .clock-bar.low i{background:linear-gradient(90deg,#ff9500,#ff375f)}
   .cm2-problem{
     font-size:clamp(3rem,10vw,5.2rem);
     font-weight:800;
@@ -192,6 +181,8 @@
   .keys button[data-k="del"]{grid-column:1}
   .keys button[data-k="0"]{grid-column:2}
   .keys button[data-k="ok"]{grid-column:3}
+  #mulKeys button[data-k="0"]{grid-column:1 / span 2}
+  #mulKeys button[data-k="del"]{grid-column:3}
   @keyframes shake{
     0%,100%{transform:translateX(0)}
     20%{transform:translateX(-9px)}
@@ -304,7 +295,6 @@
         <button type="button" data-k="9">9</button>
         <button type="button" data-k="0">0</button>
         <button type="button" data-k="del">⌫</button>
-        <button type="button" data-k="ok" class="primary">✓</button>
       </div>
     </div>
 
@@ -326,13 +316,25 @@
 <!-- ===================== ANDREA ===================== -->
 <div id="modeAndrea" class="hidden">
   <div class="stage">
-    <div class="chessclock">
-      <div class="clock-face" id="andreaClock">60.0</div>
-      <div class="clock-lbl">secondes de réflexion</div>
-      <div class="clock-bar" id="andreaBar"><i></i></div>
+    <div class="andrea-main">
+      <svg class="vial" id="andreaVial" viewBox="0 0 60 130" aria-hidden="true">
+        <defs>
+          <clipPath id="andreaVialClip">
+            <path d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+          </clipPath>
+          <linearGradient id="andreaVialGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6dd5ff"/>
+            <stop offset="1" stop-color="#0071e3"/>
+          </linearGradient>
+        </defs>
+        <path class="vial-bg" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+        <g clip-path="url(#andreaVialClip)">
+          <rect id="andreaVialLiquid" x="0" y="40" width="60" height="66" fill="url(#andreaVialGrad)"/>
+        </g>
+        <path class="vial-glass" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+      </svg>
+      <div class="cm2-problem" id="andreaProblem">Appuie sur « Commencer »</div>
     </div>
-
-    <div class="cm2-problem" id="andreaProblem">Appuie sur « Commencer »</div>
 
     <div class="keypad">
       <div class="answer" id="andreaAnswer"><span class="ph">?</span></div>
@@ -359,7 +361,7 @@
 
     <div class="corgi-zone">
       <div class="speech" id="speechAndrea">Bravo !</div>
-      <div class="bonus-float" id="andreaBonus">+1 s</div>
+      <div class="bonus-float" id="andreaBonus">+10 s</div>
       <div class="corgi-wrap" id="corgiAndrea">
         <img class="corgi-photo" id="corgiAndreaImg" src="Content.png" alt="Corgi">
       </div>
@@ -454,7 +456,7 @@
     el.textContent = text; el.classList.add("show");
     setTimeout(function(){ el.classList.remove("show"); }, 1700);
   }
-  function makeKeypad(answerEl, keysEl, onSubmit){
+  function makeKeypad(answerEl, keysEl, onSubmit, onInput){
     var value = "";
     function render(){
       if (value === ""){ answerEl.innerHTML = '<span class="ph">?</span>'; }
@@ -469,6 +471,7 @@
         value += k;
       }
       render();
+      if (onInput) onInput(value);
     }
     keysEl.addEventListener("click", function(evt){
       var b = evt.target.closest("button[data-k]");
@@ -506,7 +509,7 @@
   var speechClara = document.getElementById("speechClara");
 
   var clara = { a:0, b:0, ans:0, answered:false, nextTimer:null };
-  var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara);
+  var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara, checkClara);
 
   /* tables de ×2 à ×9 (chiffres 4-9 favorisés), voir rndTable() */
 
@@ -561,6 +564,9 @@
     if (clara.answered) return;
     var raw = claraKeypad.value();
     if (raw === "") return;
+    var target = String(clara.ans);
+    /* validation automatique : tant que la saisie est un début possible, on attend */
+    if (raw !== target && target.indexOf(raw) === 0) return;
     var v = parseInt(raw, 10);
     if (v === clara.ans){
       clara.answered = true;
@@ -587,9 +593,8 @@
   /* =========================================================
      ANDREA : 1 minute de réflexion, 1 point par bonne réponse
      ========================================================= */
-  var andreaClock = document.getElementById("andreaClock");
-  var andreaBar = document.getElementById("andreaBar");
-  var andreaBarFill = andreaBar.querySelector("i");
+  var andreaVial = document.getElementById("andreaVial");
+  var andreaVialLiquid = document.getElementById("andreaVialLiquid");
   var andreaProblem = document.getElementById("andreaProblem");
   var andreaScore = document.getElementById("andreaScore");
   var andreaBest = document.getElementById("andreaBest");
@@ -602,7 +607,8 @@
   var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
 
   var DURATION = 60000;
-  var BONUS_MS = 1000;
+  var BONUS_MS = 10000;
+  var VIAL_TOP = 40, VIAL_BOTTOM = 106;
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
     a:0, b:0, ans:0,
@@ -620,13 +626,11 @@
   andreaBest.textContent = andrea.best;
 
   function renderClock(){
-    var s = andrea.remaining / 1000;
-    andreaClock.textContent = s.toFixed(1);
-    var pct = Math.max(0, andrea.remaining / DURATION) * 100;
-    andreaBarFill.style.width = pct + "%";
-    var low = andrea.remaining <= 10000;
-    andreaClock.classList.toggle("low", low);
-    andreaBar.classList.toggle("low", low);
+    var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
+    var h = (VIAL_BOTTOM - VIAL_TOP) * pct;
+    andreaVialLiquid.setAttribute("y", (VIAL_BOTTOM - h).toFixed(1));
+    andreaVialLiquid.setAttribute("height", h.toFixed(1));
+    andreaVial.classList.toggle("low", andrea.remaining <= 10000);
   }
 
   function showBonus(){
@@ -706,7 +710,7 @@
       corgiAndreaCtl.happy();
       showSpeech(speechAndrea, "Un point !");
       showBonus();
-      msgAndrea.textContent = "Bravo, +1 point et +1 seconde !";
+      msgAndrea.textContent = "Bravo, +1 point et +10 secondes !";
       msgAndrea.className = "msg ok";
       andrea.nextTimer = setTimeout(function(){
         if (!andrea.active) return;
@@ -716,7 +720,7 @@
     } else {
       andreaKeypad.shake();
       andreaKeypad.reset();
-      msgAndrea.textContent = "Non… cherche encore, le chrono tourne !";
+      msgAndrea.textContent = "Non… cherche encore, la fiole se vide !";
       msgAndrea.className = "msg no";
     }
   }
@@ -783,8 +787,8 @@
     btnClara.classList.toggle("active", isClara);
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
-      ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir."
-      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. Le chrono s'arrête quand tu trouves : <b>1 point</b> et <b>+1 seconde</b> à chaque bonne réponse !";
+      ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir. La validation est <b>automatique</b> : pas besoin de cliquer !"
+      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. La fiole se vide avec le temps : <b>1 point</b> et <b>+10 secondes</b> de liquide à chaque bonne réponse !";
 
     /* on revient sur une partie en pause : on relance le chrono */
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){

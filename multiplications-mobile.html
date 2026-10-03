@@ -56,20 +56,16 @@
     padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
   }
 
-  /* ---- barre du haut : compteur (gauche) + scores (droite) ---- */
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:2.2rem}
-  .counter{
-    font-weight:800;font-size:2rem;line-height:1;
-    font-variant-numeric:tabular-nums;letter-spacing:-.5px;
-    color:var(--blue);
-  }
-  .counter.low{color:var(--carry)}
+  /* ---- barre du haut : score (gauche), bascule (centre), record (droite) ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:2.2rem}
   .score{
     font-weight:600;font-size:.86rem;line-height:1.15;
-    text-align:right;color:var(--muted);
+    color:var(--muted);white-space:nowrap;
   }
+  #mScore{text-align:left}
+  #mRecord{text-align:right}
   .score b{color:var(--on);font-size:1.35rem;font-weight:800}
-  .score .rec b{color:var(--blue);font-size:1rem}
+  .score.rec b{color:var(--blue);font-size:1rem}
 
   /* ---- bascule de niveau minimale ---- */
   .lvltoggle{
@@ -132,6 +128,13 @@
   .posed .ans.ok{color:var(--ok-text)}
   .hint{color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;min-height:1.2em}
 
+  /* ---- fiole de liquide (Andrea) : se vide avec le temps ---- */
+  .andrea-main{position:relative;width:100%;display:flex;align-items:center;justify-content:center}
+  .vial{position:absolute;left:0;top:50%;transform:translateY(-50%);width:42px;height:auto;display:block;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,.12))}
+  .vial-bg{fill:rgba(180,205,230,.25)}
+  .vial-glass{fill:none;stroke:#aeb8c6;stroke-width:3;stroke-linejoin:round}
+  .vial.low #vialLiquid{fill:#ff375f}
+
   /* ---- gros pavé numérique (validation automatique) ---- */
   .keypad{
     display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
@@ -192,14 +195,13 @@
 <div class="app">
 
   <header class="topbar">
-    <div class="counter" id="mCounter">✓ 0</div>
     <div class="score" id="mScore"></div>
+    <nav class="lvltoggle" aria-label="Choix du niveau">
+      <button type="button" id="btnClara" class="active">Clara</button>
+      <button type="button" id="btnAndrea">Andrea</button>
+    </nav>
+    <div class="score rec" id="mRecord"></div>
   </header>
-
-  <nav class="lvltoggle" aria-label="Choix du niveau">
-    <button type="button" id="btnClara" class="active">Clara</button>
-    <button type="button" id="btnAndrea">Andrea</button>
-  </nav>
 
   <!-- ---- Clara ---- -->
   <div class="stage" id="stageClara">
@@ -214,11 +216,29 @@
 
   <!-- ---- Andrea ---- -->
   <div class="stage hidden" id="stageAndrea">
-    <div class="posed">
-      <div class="line"><span class="val" id="mANumA"></span></div>
-      <div class="line"><span class="sign" id="mAOp">×</span><span class="val" id="mANumB"></span></div>
-      <div class="rule"></div>
-      <div class="line"><span class="ans" id="mAns"></span></div>
+    <div class="andrea-main">
+      <svg class="vial" id="vial" viewBox="0 0 60 130" aria-hidden="true">
+        <defs>
+          <clipPath id="vialClip">
+            <path d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+          </clipPath>
+          <linearGradient id="vialGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6dd5ff"/>
+            <stop offset="1" stop-color="#0071e3"/>
+          </linearGradient>
+        </defs>
+        <path class="vial-bg" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+        <g clip-path="url(#vialClip)">
+          <rect id="vialLiquid" x="0" y="40" width="60" height="66" fill="url(#vialGrad)"/>
+        </g>
+        <path class="vial-glass" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
+      </svg>
+      <div class="posed">
+        <div class="line"><span class="val" id="mANumA"></span></div>
+        <div class="line"><span class="sign" id="mAOp">×</span><span class="val" id="mANumB"></span></div>
+        <div class="rule"></div>
+        <div class="line"><span class="ans" id="mAns"></span></div>
+      </div>
     </div>
     <div class="hint" id="mHint"></div>
   </div>
@@ -241,7 +261,7 @@
 
 <div class="overlay" id="overlay">
   <img id="overlayImg" src="Content.png" alt="">
-  <span class="bonus-float" id="bonusFloat">+1 s</span>
+  <span class="bonus-float" id="bonusFloat">+10 s</span>
 </div>
 <canvas id="confetti"></canvas>
 
@@ -299,8 +319,10 @@
   }
 
   /* ---------- refs ---------- */
-  var mCounter = document.getElementById("mCounter");
   var mScore = document.getElementById("mScore");
+  var mRecord = document.getElementById("mRecord");
+  var vial = document.getElementById("vial");
+  var vialLiquid = document.getElementById("vialLiquid");
   var btnClara = document.getElementById("btnClara");
   var btnAndrea = document.getElementById("btnAndrea");
   var stageClara = document.getElementById("stageClara");
@@ -320,7 +342,8 @@
   var overlayImg = document.getElementById("overlayImg");
   var bonusFloat = document.getElementById("bonusFloat");
 
-  var DURATION = 60000, BONUS = 1000;
+  var DURATION = 60000, BONUS = 10000;
+  var VIAL_TOP = 40, VIAL_BOTTOM = 106;
   var BEST_CLARA = "multiplication_clara_record";
   var BEST_ANDREA = "multiplication_cm2_best";
 
@@ -408,14 +431,12 @@
 
   /* ---------- en-tête ---------- */
   function updateClaraHeader(){
-    mCounter.textContent = "✓ " + clara.count;
-    mCounter.classList.remove("low");
-    mScore.innerHTML = 'record <b>' + clara.best + "</b>";
+    mScore.innerHTML = '✓ <b>' + clara.count + "</b>";
+    mRecord.innerHTML = 'record <b>' + clara.best + "</b>";
   }
   function updateAndreaHeader(){
-    mCounter.textContent = (andrea.remaining / 1000).toFixed(1);
-    mCounter.classList.toggle("low", andrea.remaining <= 10000);
-    mScore.innerHTML = 'points <b>' + andrea.score + '</b><br><span class="rec">record <b>' + andrea.best + "</b></span>";
+    mScore.innerHTML = 'points <b>' + andrea.score + "</b>";
+    mRecord.innerHTML = 'record <b>' + andrea.best + "</b>";
   }
 
   /* ---------- validation automatique ---------- */
@@ -463,9 +484,11 @@
   }
 
   function renderClock(){
-    if (mode !== "andrea") return;
-    mCounter.textContent = (andrea.remaining / 1000).toFixed(1);
-    mCounter.classList.toggle("low", andrea.remaining <= 10000);
+    var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
+    var h = (VIAL_BOTTOM - VIAL_TOP) * pct;
+    vialLiquid.setAttribute("y", (VIAL_BOTTOM - h).toFixed(1));
+    vialLiquid.setAttribute("height", h.toFixed(1));
+    vial.classList.toggle("low", andrea.remaining <= 10000);
   }
   function clockTick(ts){
     if (!andrea.running) return;
@@ -494,6 +517,7 @@
     andrea.score = 0; andrea.remaining = DURATION;
     mHint.textContent = "";
     updateAndreaHeader();
+    renderClock();
     newAndreaProblem();
     startClock();
   }
@@ -508,7 +532,7 @@
     mAOp.textContent = "";
     mAns.textContent = andrea.score + " pt" + (andrea.score > 1 ? "s" : "");
     mAns.className = "ans ok";
-    mHint.textContent = "Touche le chrono pour rejouer";
+    mHint.textContent = "Touche la fiole pour rejouer";
     flashCorgi(andrea.score === 0 ? "cry" : "happy");
     if (andrea.score > 0) launchConfetti();
   }
@@ -582,11 +606,12 @@
       if (andrea.active && andrea.paused){ andrea.paused = false; startClock(); renderAndreaProblem(); }
       else if (!andrea.active){ startAndrea(); }
       updateAndreaHeader();
+      renderClock();
     }
   }
   btnClara.addEventListener("click", function(){ setMode("clara"); });
   btnAndrea.addEventListener("click", function(){ setMode("andrea"); });
-  mCounter.addEventListener("click", function(){
+  vial.addEventListener("click", function(){
     if (mode === "andrea" && !andrea.active) startAndrea();
   });
 
