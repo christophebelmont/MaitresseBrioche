@@ -81,6 +81,7 @@
 
   /* ---- zone centrale ---- */
   .stage{
+    position:relative;
     flex:1;min-height:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:10px;overflow-y:auto;
@@ -128,12 +129,11 @@
   .posed .ans.ok{color:var(--ok-text)}
   .hint{color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;min-height:1.2em}
 
-  /* ---- fiole de liquide (Andrea) : se vide avec le temps ---- */
-  .andrea-main{position:relative;width:100%;display:flex;align-items:center;justify-content:center}
-  .vial{position:absolute;left:0;top:50%;transform:translateY(-50%);width:42px;height:auto;display:block;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,.12))}
-  .vial-bg{fill:rgba(180,205,230,.25)}
-  .vial-glass{fill:none;stroke:#aeb8c6;stroke-width:3;stroke-linejoin:round}
-  .vial.low #vialLiquid{fill:#ff375f}
+  /* ---- fiole de liquide (Clara & Andrea) : sur toute la hauteur ---- */
+  .vial{position:absolute;left:0;top:0;bottom:0;width:34px;z-index:3;cursor:pointer}
+  .vial-glass{position:absolute;inset:0;border:3px solid #aeb8c6;border-radius:8px 8px 22px 22px;background:rgba(180,205,230,.15);overflow:hidden;box-shadow:inset 0 0 12px rgba(255,255,255,.55)}
+  .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
+  .vial.low .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
 
   /* ---- gros pavé numérique (validation automatique) ---- */
   .keypad{
@@ -205,6 +205,7 @@
 
   <!-- ---- Clara ---- -->
   <div class="stage" id="stageClara">
+    <div class="vial" id="claraVial"><div class="vial-glass"><div class="vial-liquid" id="claraVialLiquid"></div></div></div>
     <div class="op" id="mOpBox">
       <div class="line"><span class="mnum" id="mNumA"></span></div>
       <div class="line"><span class="sign" id="mOp">×</span><span class="mnum factor" id="mNumB"></span></div>
@@ -212,33 +213,17 @@
       <div class="line"><span class="mnum res q" id="mRes"></span></div>
     </div>
     <div class="dotgrid" id="mGrid"></div>
+    <div class="hint" id="mClaraHint"></div>
   </div>
 
   <!-- ---- Andrea ---- -->
   <div class="stage hidden" id="stageAndrea">
-    <div class="andrea-main">
-      <svg class="vial" id="vial" viewBox="0 0 60 130" aria-hidden="true">
-        <defs>
-          <clipPath id="vialClip">
-            <path d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-          </clipPath>
-          <linearGradient id="vialGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#6dd5ff"/>
-            <stop offset="1" stop-color="#0071e3"/>
-          </linearGradient>
-        </defs>
-        <path class="vial-bg" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-        <g clip-path="url(#vialClip)">
-          <rect id="vialLiquid" x="0" y="40" width="60" height="66" fill="url(#vialGrad)"/>
-        </g>
-        <path class="vial-glass" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-      </svg>
-      <div class="posed">
-        <div class="line"><span class="val" id="mANumA"></span></div>
-        <div class="line"><span class="sign" id="mAOp">×</span><span class="val" id="mANumB"></span></div>
-        <div class="rule"></div>
-        <div class="line"><span class="ans" id="mAns"></span></div>
-      </div>
+    <div class="vial" id="andreaVial"><div class="vial-glass"><div class="vial-liquid" id="andreaVialLiquid"></div></div></div>
+    <div class="posed">
+      <div class="line"><span class="val" id="mANumA"></span></div>
+      <div class="line"><span class="sign" id="mAOp">×</span><span class="val" id="mANumB"></span></div>
+      <div class="rule"></div>
+      <div class="line"><span class="ans" id="mAns"></span></div>
     </div>
     <div class="hint" id="mHint"></div>
   </div>
@@ -321,8 +306,11 @@
   /* ---------- refs ---------- */
   var mScore = document.getElementById("mScore");
   var mRecord = document.getElementById("mRecord");
-  var vial = document.getElementById("vial");
-  var vialLiquid = document.getElementById("vialLiquid");
+  var claraVial = document.getElementById("claraVial");
+  var claraVialLiquid = document.getElementById("claraVialLiquid");
+  var andreaVial = document.getElementById("andreaVial");
+  var andreaVialLiquid = document.getElementById("andreaVialLiquid");
+  var mClaraHint = document.getElementById("mClaraHint");
   var btnClara = document.getElementById("btnClara");
   var btnAndrea = document.getElementById("btnAndrea");
   var stageClara = document.getElementById("stageClara");
@@ -343,7 +331,6 @@
   var bonusFloat = document.getElementById("bonusFloat");
 
   var DURATION = 60000, BONUS = 10000;
-  var VIAL_TOP = 40, VIAL_BOTTOM = 106;
   var BEST_CLARA = "multiplication_clara_record";
   var BEST_ANDREA = "multiplication_cm2_best";
 
@@ -359,9 +346,10 @@
 
   var clara = {
     a:0, b:0, ans:0, value:"", locked:false,
-    count:0, streak:0,
+    count:0,
     best: parseInt(localStorage.getItem(BEST_CLARA), 10) || 0,
-    nextTimer:null
+    active:false, running:false, paused:false,
+    remaining:DURATION, lastTs:null, raf:null, nextTimer:null
   };
   var andrea = {
     a:0, b:0, ans:0, value:"", locked:false,
@@ -448,7 +436,32 @@
     onWrong(st);
   }
 
-  /* ---------- Clara ---------- */
+  /* ---------- Clara : fiole + score, comme Andrea ---------- */
+  function renderClaraClock(){
+    var pct = Math.max(0, Math.min(1, clara.remaining / DURATION));
+    claraVialLiquid.style.height = (pct * 100) + "%";
+    claraVial.classList.toggle("low", clara.remaining <= 10000);
+  }
+  function claraTick(ts){
+    if (!clara.running) return;
+    if (clara.lastTs == null) clara.lastTs = ts;
+    var dt = ts - clara.lastTs; clara.lastTs = ts;
+    clara.remaining -= dt;
+    if (clara.remaining <= 0){ clara.remaining = 0; renderClaraClock(); endClara(); return; }
+    renderClaraClock();
+    clara.raf = requestAnimationFrame(claraTick);
+  }
+  function claraStartClock(){
+    if (!clara.active || clara.running) return;
+    clara.running = true; clara.lastTs = null;
+    clara.raf = requestAnimationFrame(claraTick);
+  }
+  function claraStopClock(){
+    clara.running = false;
+    if (clara.raf) cancelAnimationFrame(clara.raf);
+    clara.raf = null;
+  }
+
   function newClara(){
     if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
     clara.locked = false;
@@ -459,18 +472,41 @@
     renderClara();
   }
 
+  function startClara(){
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    claraStopClock();
+    clara.active = true; clara.paused = false;
+    clara.count = 0; clara.remaining = DURATION;
+    mClaraHint.textContent = "";
+    updateClaraHeader();
+    renderClaraClock();
+    newClara();
+    claraStartClock();
+  }
+
+  function endClara(){
+    claraStopClock();
+    clara.active = false;
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    if (clara.count > clara.best){ clara.best = clara.count; saveInt(BEST_CLARA, clara.best); }
+    updateClaraHeader();
+    mClaraHint.textContent = "Score : " + clara.count + ". Touche la fiole pour rejouer";
+    flashCorgi(clara.count === 0 ? "cry" : "happy");
+    if (clara.count > 0) launchConfetti();
+  }
+
   function claraCorrect(){
     clara.locked = true;
     clara.value = String(clara.ans);
     renderClaraAnswer("ok");
     clara.count++;
-    clara.streak++;
-    if (clara.streak > clara.best){ clara.best = clara.streak; saveInt(BEST_CLARA, clara.best); }
+    clara.remaining = Math.min(DURATION, clara.remaining + BONUS);
+    renderClaraClock();
     updateClaraHeader();
     playBravoSound();
     launchConfetti();
     flashCorgi("happy");
-    clara.nextTimer = setTimeout(newClara, 950);
+    clara.nextTimer = setTimeout(function(){ if (clara.active) newClara(); }, 900);
   }
 
   /* ---------- Andrea ---------- */
@@ -485,10 +521,8 @@
 
   function renderClock(){
     var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
-    var h = (VIAL_BOTTOM - VIAL_TOP) * pct;
-    vialLiquid.setAttribute("y", (VIAL_BOTTOM - h).toFixed(1));
-    vialLiquid.setAttribute("height", h.toFixed(1));
-    vial.classList.toggle("low", andrea.remaining <= 10000);
+    andreaVialLiquid.style.height = (pct * 100) + "%";
+    andreaVial.classList.toggle("low", andrea.remaining <= 10000);
   }
   function clockTick(ts){
     if (!andrea.running) return;
@@ -564,7 +598,6 @@
     st.value = "";
     renderAnswer();
     keypad.classList.remove("shake"); void keypad.offsetWidth; keypad.classList.add("shake");
-    if (st === clara){ clara.streak = 0; updateClaraHeader(); }
     flashCorgi("sad");
   }
 
@@ -573,6 +606,7 @@
     var st = (mode === "clara") ? clara : andrea;
     if (st.locked) return;
     if (mode === "andrea" && !andrea.running) return;
+    if (mode === "clara" && !clara.running) return;
     if (k === "del"){ st.value = st.value.slice(0, -1); renderAnswer(); return; }
     if (st.value.length >= 3) return;
     st.value += k;
@@ -593,6 +627,7 @@
   /* ---------- bascule de niveau ---------- */
   function setMode(m){
     if (mode === "andrea" && m !== "andrea"){ if (andrea.running){ andrea.paused = true; stopClock(); } }
+    if (mode === "clara" && m !== "clara"){ if (clara.running){ clara.paused = true; claraStopClock(); } }
     mode = m;
     var isClara = (m === "clara");
     stageClara.classList.toggle("hidden", !isClara);
@@ -600,8 +635,10 @@
     btnClara.classList.toggle("active", isClara);
     btnAndrea.classList.toggle("active", !isClara);
     if (isClara){
+      if (clara.active && clara.paused){ clara.paused = false; claraStartClock(); }
+      else if (!clara.active){ startClara(); }
       updateClaraHeader();
-      renderClara();
+      renderClaraClock();
     } else {
       if (andrea.active && andrea.paused){ andrea.paused = false; startClock(); renderAndreaProblem(); }
       else if (!andrea.active){ startAndrea(); }
@@ -611,18 +648,25 @@
   }
   btnClara.addEventListener("click", function(){ setMode("clara"); });
   btnAndrea.addEventListener("click", function(){ setMode("andrea"); });
-  vial.addEventListener("click", function(){
+  claraVial.addEventListener("click", function(){
+    if (mode === "clara" && !clara.active) startClara();
+  });
+  andreaVial.addEventListener("click", function(){
     if (mode === "andrea" && !andrea.active) startAndrea();
   });
 
   document.addEventListener("visibilitychange", function(){
-    if (document.hidden){ if (andrea.running){ andrea.paused = true; stopClock(); } }
-    else if (mode === "andrea" && andrea.active && andrea.paused){ andrea.paused = false; startClock(); }
+    if (document.hidden){
+      if (andrea.running){ andrea.paused = true; stopClock(); }
+      if (clara.running){ clara.paused = true; claraStopClock(); }
+    } else {
+      if (mode === "andrea" && andrea.active && andrea.paused){ andrea.paused = false; startClock(); }
+      if (mode === "clara" && clara.active && clara.paused){ clara.paused = false; claraStartClock(); }
+    }
   });
 
   /* ---------- init ---------- */
   setMode("clara");
-  newClara();
 })();
 </script>
 </body>

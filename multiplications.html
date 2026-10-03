@@ -76,6 +76,7 @@
   .mode-switch button.active{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14)}
 
   .stage{
+    position:relative;
     width:100%;
     max-width:860px;
     background:var(--panel);
@@ -126,12 +127,12 @@
   .dotgrid.pop .dot{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
   .icap{color:var(--muted);font-size:.85rem;font-weight:500;text-align:center;min-height:20px}
 
-  /* ---- Andrea : fiole de liquide (remplace le chrono) ---- */
-  .andrea-main{position:relative;width:100%;display:flex;align-items:center;justify-content:center;min-height:132px}
-  .vial{position:absolute;left:0;top:50%;transform:translateY(-50%);width:52px;height:auto;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.12))}
-  .vial-bg{fill:rgba(180,205,230,.25)}
-  .vial-glass{fill:none;stroke:#aeb8c6;stroke-width:3;stroke-linejoin:round}
-  .vial.low #andreaVialLiquid{fill:#ff375f}
+  /* ---- fiole de liquide (Clara & Andrea) : sur toute la hauteur ---- */
+  .vial{position:absolute;left:16px;top:16px;bottom:16px;width:38px;z-index:3;pointer-events:none}
+  .vial-glass{position:absolute;inset:0;border:3px solid #aeb8c6;border-radius:9px 9px 26px 26px;background:rgba(180,205,230,.15);overflow:hidden;box-shadow:inset 0 0 14px rgba(255,255,255,.55)}
+  .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
+  .vial.low .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
+  .andrea-main{width:100%;display:flex;align-items:center;justify-content:center;min-height:132px}
   /* ---- bonus « +10 s » qui monte au-dessus du corgi ---- */
   .bonus-float{
     position:absolute;top:0;left:50%;
@@ -270,6 +271,7 @@
 <!-- ===================== CLARA ===================== -->
 <div id="modeClara">
   <div class="stage">
+    <div class="vial" id="claraVial"><div class="vial-glass"><div class="vial-liquid" id="claraVialLiquid"></div></div></div>
     <div class="mul-layout">
       <div class="mul-calc" id="mulCalc">
         <div class="mul-line"><span class="num" id="mulNumA"></span></div>
@@ -298,6 +300,11 @@
       </div>
     </div>
 
+    <div class="score-row">
+      <span class="pts">Points : <b id="claraScore">0</b></span>
+      <span class="best">Meilleur : <b id="claraBest">0</b></span>
+    </div>
+
     <div class="corgi-zone">
       <div class="speech" id="speechClara">Bravo !</div>
       <div class="corgi-wrap" id="corgiClara">
@@ -308,7 +315,7 @@
     <p class="msg" id="msgClara"></p>
 
     <div class="buttons">
-      <button type="button" class="primary" id="claraNew">Nouveau calcul</button>
+      <button type="button" class="primary" id="claraStart">Commencer</button>
     </div>
   </div>
 </div>
@@ -316,23 +323,8 @@
 <!-- ===================== ANDREA ===================== -->
 <div id="modeAndrea" class="hidden">
   <div class="stage">
+    <div class="vial" id="andreaVial"><div class="vial-glass"><div class="vial-liquid" id="andreaVialLiquid"></div></div></div>
     <div class="andrea-main">
-      <svg class="vial" id="andreaVial" viewBox="0 0 60 130" aria-hidden="true">
-        <defs>
-          <clipPath id="andreaVialClip">
-            <path d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-          </clipPath>
-          <linearGradient id="andreaVialGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#6dd5ff"/>
-            <stop offset="1" stop-color="#0071e3"/>
-          </linearGradient>
-        </defs>
-        <path class="vial-bg" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-        <g clip-path="url(#andreaVialClip)">
-          <rect id="andreaVialLiquid" x="0" y="40" width="60" height="66" fill="url(#andreaVialGrad)"/>
-        </g>
-        <path class="vial-glass" d="M22,2 L38,2 L38,20 L52,84 A22,22 0 0 1 8,84 L22,20 Z"/>
-      </svg>
       <div class="cm2-problem" id="andreaProblem">Appuie sur « Commencer »</div>
     </div>
 
@@ -494,6 +486,12 @@
   var modeAndrea = document.getElementById("modeAndrea");
   var sub = document.getElementById("sub");
 
+  /* durée commune aux deux niveaux : la fiole se vide en 1 minute,
+     +10 s de liquide par bonne réponse */
+  var DURATION = 60000;
+  var BONUS_MS = 10000;
+  var CLARA_BEST_KEY = "multiplication_clara_record";
+
   /* =========================================================
      CLARA : petites multiplications avec une grille de points
      ========================================================= */
@@ -508,10 +506,51 @@
   var corgiClaraCtl = Corgi.create(document.getElementById("corgiClaraImg"));
   var speechClara = document.getElementById("speechClara");
 
-  var clara = { a:0, b:0, ans:0, answered:false, nextTimer:null };
+  var claraVial = document.getElementById("claraVial");
+  var claraVialLiquid = document.getElementById("claraVialLiquid");
+  var claraScoreEl = document.getElementById("claraScore");
+  var claraBestEl = document.getElementById("claraBest");
+  var claraStart = document.getElementById("claraStart");
+
+  var clara = {
+    a:0, b:0, ans:0, answered:false, nextTimer:null,
+    score:0,
+    best: parseInt(localStorage.getItem(CLARA_BEST_KEY), 10) || 0,
+    active:false, running:false, remaining:DURATION,
+    lastTs:null, raf:null, wasRunning:false
+  };
   var claraKeypad = makeKeypad(document.getElementById("mulAnswer"), document.getElementById("mulKeys"), checkClara, checkClara);
 
+  claraBestEl.textContent = clara.best;
+
   /* tables de ×2 à ×9 (chiffres 4-9 favorisés), voir rndTable() */
+
+  /* fiole de Clara : même principe que le chrono d'Andrea */
+  function renderClaraClock(){
+    var pct = Math.max(0, Math.min(1, clara.remaining / DURATION));
+    claraVialLiquid.style.height = (pct * 100) + "%";
+    claraVial.classList.toggle("low", clara.remaining <= 10000);
+  }
+  function claraTick(ts){
+    if (!clara.running) return;
+    if (clara.lastTs == null) clara.lastTs = ts;
+    var dt = ts - clara.lastTs;
+    clara.lastTs = ts;
+    clara.remaining -= dt;
+    if (clara.remaining <= 0){ clara.remaining = 0; renderClaraClock(); endClara(); return; }
+    renderClaraClock();
+    clara.raf = requestAnimationFrame(claraTick);
+  }
+  function claraStartClock(){
+    if (!clara.active || clara.running) return;
+    clara.running = true; clara.lastTs = null;
+    clara.raf = requestAnimationFrame(claraTick);
+  }
+  function claraStopClock(){
+    clara.running = false;
+    if (clara.raf) cancelAnimationFrame(clara.raf);
+    clara.raf = null;
+  }
 
   /* grille : a rangées de b points (séparés par paquets de 5) */
   function renderDotGrid(){
@@ -560,7 +599,21 @@
     corgiClaraCtl.idle();
   }
 
+  function startClara(){
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    claraStopClock();
+    clara.active = true;
+    clara.score = 0;
+    clara.remaining = DURATION;
+    claraScoreEl.textContent = "0";
+    renderClaraClock();
+    newClara();
+    claraStart.textContent = "Recommencer";
+    claraStartClock();
+  }
+
   function checkClara(){
+    if (!clara.active || !clara.running) return;
     if (clara.answered) return;
     var raw = claraKeypad.value();
     if (raw === "") return;
@@ -576,9 +629,13 @@
       corgiHop(corgiClara);
       corgiClaraCtl.happy();
       showSpeech(speechClara, "Bravo !");
-      msgClara.textContent = "Bravo, c'est juste !";
+      clara.score++;
+      clara.remaining = Math.min(DURATION, clara.remaining + BONUS_MS);
+      renderClaraClock();
+      claraScoreEl.textContent = clara.score;
+      msgClara.textContent = "Bravo ! +1 point et +10 secondes.";
       msgClara.className = "msg ok";
-      clara.nextTimer = setTimeout(newClara, 2400);
+      clara.nextTimer = setTimeout(function(){ if (clara.active) newClara(); }, 900);
     } else {
       claraKeypad.shake();
       claraKeypad.reset();
@@ -588,7 +645,38 @@
     }
   }
 
-  document.getElementById("claraNew").addEventListener("click", newClara);
+  function endClara(){
+    if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
+    claraStopClock();
+    clara.active = false;
+    claraStart.textContent = "Rejouer";
+    var newBest = false;
+    if (clara.score > clara.best){
+      clara.best = clara.score;
+      claraBestEl.textContent = clara.best;
+      try { localStorage.setItem(CLARA_BEST_KEY, String(clara.best)); } catch (e) {}
+      newBest = true;
+    }
+    if (clara.score === 0){
+      corgiClaraCtl.cry();
+      msgClara.textContent = "Temps écoulé ! Essaie encore, tu feras mieux.";
+      msgClara.className = "msg no";
+    } else if (newBest){
+      corgiClaraCtl.happy();
+      showSpeech(speechClara, "Nouveau record !");
+      msgClara.textContent = "Temps écoulé ! " + clara.score + " point" +
+        (clara.score > 1 ? "s" : "") + " — nouveau record !";
+      msgClara.className = "msg ok";
+      launchConfetti();
+    } else {
+      corgiClaraCtl.happy();
+      msgClara.textContent = "Temps écoulé ! Tu as marqué " + clara.score + " point" +
+        (clara.score > 1 ? "s" : "") + ".";
+      msgClara.className = "msg ok";
+    }
+  }
+
+  claraStart.addEventListener("click", startClara);
 
   /* =========================================================
      ANDREA : 1 minute de réflexion, 1 point par bonne réponse
@@ -606,9 +694,6 @@
   var andreaBonus = document.getElementById("andreaBonus");
   var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
 
-  var DURATION = 60000;
-  var BONUS_MS = 10000;
-  var VIAL_TOP = 40, VIAL_BOTTOM = 106;
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
     a:0, b:0, ans:0,
@@ -627,9 +712,7 @@
 
   function renderClock(){
     var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
-    var h = (VIAL_BOTTOM - VIAL_TOP) * pct;
-    andreaVialLiquid.setAttribute("y", (VIAL_BOTTOM - h).toFixed(1));
-    andreaVialLiquid.setAttribute("height", h.toFixed(1));
+    andreaVialLiquid.style.height = (pct * 100) + "%";
     andreaVial.classList.toggle("low", andrea.remaining <= 10000);
   }
 
@@ -761,10 +844,11 @@
   /* mise en pause si l'onglet est masqué */
   document.addEventListener("visibilitychange", function(){
     if (document.hidden){
+      if (clara.running){ clara.wasRunning = true; claraStopClock(); }
       if (andrea.running){ andrea.wasRunning = true; stopClock(); }
-    } else if (andrea.active && andrea.wasRunning){
-      andrea.wasRunning = false;
-      startClock();
+    } else {
+      if (level === "clara" && clara.active && clara.wasRunning){ clara.wasRunning = false; claraStartClock(); }
+      if (level === "andrea" && andrea.active && andrea.wasRunning){ andrea.wasRunning = false; startClock(); }
     }
   });
 
@@ -775,10 +859,14 @@
     var prev = level;
     var isClara = (l === "clara");
 
-    /* on quitte le mode Andrea en pleine partie : on met le chrono en pause */
+    /* on met en pause le niveau que l'on quitte */
     if (prev === "andrea" && isClara && andrea.running){
       andrea.wasRunning = true;
       stopClock();
+    }
+    if (prev === "clara" && !isClara && clara.running){
+      clara.wasRunning = true;
+      claraStopClock();
     }
 
     level = l;
@@ -787,10 +875,14 @@
     btnClara.classList.toggle("active", isClara);
     btnAndrea.classList.toggle("active", !isClara);
     sub.innerHTML = isClara
-      ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points pour bien voir. La validation est <b>automatique</b> : pas besoin de cliquer !"
-      : "Andrea : les <b>tables de 2 à 9</b>, toutes les multiplications des chiffres de <b>2 à 9</b>, <b>1 minute</b> de réflexion. La fiole se vide avec le temps : <b>1 point</b> et <b>+10 secondes</b> de liquide à chaque bonne réponse !";
+      ? "Clara : les <b>tables de 2 à 9</b>, avec une grille de points. La validation est <b>automatique</b> et la fiole se vide : <b>1 point</b> et <b>+10 secondes</b> de liquide par bonne réponse !"
+      : "Andrea : les <b>tables de 2 à 9</b>, <b>1 minute</b> de réflexion. La fiole se vide avec le temps : <b>1 point</b> et <b>+10 secondes</b> de liquide à chaque bonne réponse !";
 
-    /* on revient sur une partie en pause : on relance le chrono */
+    /* on relance le niveau que l'on rejoint s'il était en pause */
+    if (prev === "andrea" && isClara && clara.active && clara.wasRunning){
+      clara.wasRunning = false;
+      claraStartClock();
+    }
     if (prev === "clara" && !isClara && andrea.active && andrea.wasRunning){
       andrea.wasRunning = false;
       startClock();
@@ -815,6 +907,7 @@
 
   /* ---------- init ---------- */
   renderClock();
+  renderClaraClock();
   setLevel("clara");
   newClara();
 })();
