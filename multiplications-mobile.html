@@ -135,18 +135,21 @@
   .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
   .vial.low .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
 
-  /* ---- sélecteur des tables (Clara) : carrés 0-9 à droite ---- */
+  /* ---- sélecteur des tables (Clara) : 2 colonnes, bleu = 1er facteur, rouge = 2e ---- */
   .tables{
     position:absolute;right:2px;top:50%;transform:translateY(-50%);
-    display:flex;flex-direction:column;gap:4px;z-index:4;
+    display:flex;gap:5px;z-index:4;
   }
+  .tcol{display:flex;flex-direction:column;gap:5px}
   .tables button{
     font:inherit;font-weight:700;font-size:.95rem;
     width:30px;height:30px;padding:0;border-radius:8px;
-    background:#eef1f5;color:var(--muted);border:1px solid var(--line);
     cursor:pointer;touch-action:manipulation;
   }
-  .tables button.on{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 2px 6px rgba(0,113,227,.3)}
+  .tcol.blue button{background:#eaf3fd;color:#3a6ea5;border:1px solid #cfe3f7}
+  .tcol.red button{background:#fdecef;color:#a5405a;border:1px solid #f7d3da}
+  .tcol.blue button.on{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 2px 6px rgba(0,113,227,.3)}
+  .tcol.red button.on{background:var(--carry);color:#fff;border-color:transparent;box-shadow:0 2px 6px rgba(255,55,95,.3)}
 
   /* ---- gros pavé numérique (validation automatique) ---- */
   .keypad{
@@ -353,45 +356,50 @@
   function rndTable(){ return TABLE_POOL[Math.floor(Math.random() * TABLE_POOL.length)]; }
   function saveInt(key, v){ try { localStorage.setItem(key, String(v)); } catch (e) {} }
 
-  /* ---------- sélecteur des tables (Clara) ---------- */
-  var TABLES_KEY = "multiplication_clara_tables";
+  /* ---------- sélecteur des tables (Clara) : bleu = 1er facteur, rouge = 2e ---------- */
+  var TABLES_KEY_A = "multiplication_clara_tables_a";
+  var TABLES_KEY_B = "multiplication_clara_tables_b";
   var claraTablesEl = document.getElementById("claraTables");
-  var claraSelected = (function(){
+  function loadTables(key){
     try {
-      var s = localStorage.getItem(TABLES_KEY);
+      var s = localStorage.getItem(key);
       if (s){ var arr = s.split("").map(function(c){ return parseInt(c, 10); }); if (arr.length) return arr; }
     } catch (e) {}
     return [2, 3, 4, 5, 6, 7, 8, 9];
-  })();
-  function saveTables(){ try { localStorage.setItem(TABLES_KEY, claraSelected.join("")); } catch (e) {} }
-  function renderTables(){
-    var html = "", d;
-    for (d = 0; d <= 9; d++){
-      html += '<button type="button" data-d="' + d + '"' +
-        (claraSelected.indexOf(d) >= 0 ? ' class="on"' : "") + '>' + d + '</button>';
-    }
-    claraTablesEl.innerHTML = html;
   }
-  function toggleTable(d){
-    var i = claraSelected.indexOf(d);
-    if (i >= 0){
-      if (claraSelected.length <= 1) return;   /* on garde au moins une table */
-      claraSelected.splice(i, 1);
-    } else {
-      claraSelected.push(d);
-      claraSelected.sort(function(a, b){ return a - b; });
+  var claraSelA = loadTables(TABLES_KEY_A);
+  var claraSelB = loadTables(TABLES_KEY_B);
+  function saveTables(key, sel){ try { localStorage.setItem(key, sel.join("")); } catch (e) {} }
+  function tablesColHTML(col, sel, cls){
+    var html = '<div class="tcol ' + cls + '">', d;
+    for (d = 1; d <= 9; d++){
+      html += '<button type="button" data-col="' + col + '" data-d="' + d + '"' +
+        (sel.indexOf(d) >= 0 ? ' class="on"' : "") + '>' + d + '</button>';
     }
-    saveTables();
+    return html + "</div>";
+  }
+  function renderTables(){
+    claraTablesEl.innerHTML = tablesColHTML("a", claraSelA, "blue") + tablesColHTML("b", claraSelB, "red");
+  }
+  function toggleTable(col, d){
+    var sel = (col === "a") ? claraSelA : claraSelB;
+    var key = (col === "a") ? TABLES_KEY_A : TABLES_KEY_B;
+    var i = sel.indexOf(d);
+    if (i >= 0){
+      if (sel.length <= 1) return;   /* on garde au moins une table par colonne */
+      sel.splice(i, 1);
+    } else {
+      sel.push(d);
+      sel.sort(function(a, b){ return a - b; });
+    }
+    saveTables(key, sel);
     renderTables();
   }
-  function rndClaraTable(){
-    if (!claraSelected.length) return 2;
-    return claraSelected[Math.floor(Math.random() * claraSelected.length)];
-  }
+  function rndFrom(sel){ return sel[Math.floor(Math.random() * sel.length)]; }
   claraTablesEl.addEventListener("click", function(evt){
     var b = evt.target.closest("button[data-d]");
     if (!b) return;
-    toggleTable(parseInt(b.getAttribute("data-d"), 10));
+    toggleTable(b.getAttribute("data-col"), parseInt(b.getAttribute("data-d"), 10));
   });
   renderTables();
 
@@ -520,8 +528,8 @@
     if (clara.nextTimer){ clearTimeout(clara.nextTimer); clara.nextTimer = null; }
     clara.locked = false;
     clara.value = "";
-    clara.a = rndClaraTable();
-    clara.b = rndClaraTable();
+    clara.a = rndFrom(claraSelA);
+    clara.b = rndFrom(claraSelB);
     clara.ans = clara.a * clara.b;
     renderClara();
   }
