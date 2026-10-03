@@ -358,7 +358,8 @@
   sizeCanvas();
   window.addEventListener("resize", sizeCanvas);
   function launchConfetti(){
-    for (var i = 0; i < 150; i++){
+    if (parts.length > 120) return;   /* évite l'accumulation (performance) */
+    for (var i = 0; i < 45; i++){
       parts.push({
         x: Math.random() * canvas.width,
         y: -20 - Math.random() * canvas.height * 0.5,
@@ -577,6 +578,7 @@
       playBravoSound();
       launchConfetti();
       flashCorgi("happy");
+      showBonus();
       clara.score++;
       clara.remaining = Math.min(DURATION, clara.remaining + BONUS_MS);
       renderClaraClock();
