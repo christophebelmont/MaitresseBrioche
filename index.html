@@ -18,6 +18,8 @@
     --green-bg:#e9f9ee;
     --purple:#af52de;
     --purple-bg:#f4e9fd;
+    --teal:#30b0c7;
+    --teal-bg:#e4f6f9;
   }
   *{box-sizing:border-box}
   body{
@@ -79,6 +81,7 @@
   .card.dictee .icon{background:var(--green-bg);color:var(--green)}
   .card.calcul .icon{background:var(--purple-bg);color:var(--purple)}
   .card.multipli .icon{background:var(--blue-bg);color:var(--blue)}
+  .card.bases .icon{background:var(--teal-bg);color:var(--teal)}
 
   @media(max-width:520px){
     body{padding:40px 16px}
@@ -143,6 +146,18 @@
         </svg>
       </span>
       <span class="name">Les tables de multiplication</span>
+    </a>
+
+    <a class="card bases" href="bases.html">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9h16"/>
+          <path d="M4 15h16"/>
+          <path d="M10 3 8 21"/>
+          <path d="M16 3l-2 18"/>
+        </svg>
+      </span>
+      <span class="name">Les bases de numération</span>
     </a>
 
   </nav>
