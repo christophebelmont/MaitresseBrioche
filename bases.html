@@ -377,6 +377,9 @@
   var PALETTE = ["#0071e3","#34c759","#ff9500","#af52de","#ff375f","#30b0c7","#5856d6","#ff2d55"];
 
   function meta(b){ for (var i=0;i<BASES.length;i++) if (BASES[i].b===b) return BASES[i]; return null; }
+  var SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  function sup(n){ var t = String(n), s = ""; for (var i=0;i<t.length;i++) s += SUP[+t[i]]; return s; }
+  function powLabel(base,k){ return base + sup(k); }
   function toBase(n,b){ if (n===0) return "0"; var s=""; while (n>0){ s = DIGITS[n%b] + s; n = Math.floor(n/b); } return s; }
   function fromBase(str,b){
     str = String(str).toUpperCase(); var n=0;
@@ -490,21 +493,22 @@
     for (var k=cols-1;k>=0;k--){
       var w = Math.pow(base,k);
       var d = Math.floor(val / w) % base;
+      var pw = powLabel(base,k);
       if (base === 2){
         html += '<div class="pv-col'+(d?' on':'')+'" data-k="'+k+'">'
-              +   '<div class="pv-weight">'+w+'</div>'
+              +   '<div class="pv-weight">'+pw+'</div>'
               +   '<button type="button" class="lamp'+(d?' on':'')+'" aria-label="poids '+w+'"></button>'
-              +   '<div class="pv-contrib">'+(d? w : '·')+'</div>'
+              +   '<div class="pv-contrib">'+(d? pw : '·')+'</div>'
               + '</div>';
       } else {
         html += '<div class="pv-col'+(d?' on':'')+'" data-k="'+k+'">'
-              +   '<div class="pv-weight">'+w+'</div>'
+              +   '<div class="pv-weight">'+pw+'</div>'
               +   '<div class="pv-digit-wrap">'
               +     '<button type="button" class="pv-up" aria-label="augmenter">▲</button>'
               +     '<div class="pv-digit" style="color:'+m.color+'">'+DIGITS[d]+'</div>'
               +     '<button type="button" class="pv-down" aria-label="diminuer">▼</button>'
               +   '</div>'
-              +   '<div class="pv-contrib">'+(d? (d+'×'+w) : '·')+'</div>'
+              +   '<div class="pv-contrib">'+(d? (d+'×'+pw) : '·')+'</div>'
               + '</div>';
       }
     }
@@ -524,7 +528,7 @@
     for (var k=cols-1;k>=0;k--){
       var w = Math.pow(base,k);
       var d = Math.floor(state.val / w) % base;
-      if (d > 0) terms.push(base === 2 ? String(w) : (d + "×" + w));
+      if (d > 0) terms.push(base === 2 ? powLabel(base,k) : (d + "×" + powLabel(base,k)));
     }
     sumLine.innerHTML = (terms.length ? terms.join(" + ") : "0") + " = <b>" + state.val + "</b>";
   }
