@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les équations à réduire</title>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel2:#f7f7f9;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --blue:#0071e3;
+    --blue-dark:#0060c0;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --orange:#ff9500;
+    --purple:#af52de;
+    --pink:#ff375f;
+    --teal:#30b0c7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='52' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff5c8a' fill-opacity='0.10' d='M12 21s-8-5.2-8-11c0-3.3 2.5-5.5 5.5-5.5 1.7 0 3.2 1 4 2.5.8-1.5 2.3-2.5 4-2.5 3 0 5.5 2.2 5.5 5.5 0 5.8-8 11-8 11z'/%3E%3C/svg%3E");
+    background-repeat:repeat;
+    background-attachment:fixed;
+    padding:26px 16px 50px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  h1{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:700;letter-spacing:-.4px;margin:0 0 6px;text-align:center}
+  .lead{color:var(--muted);text-align:center;max-width:680px;margin:0 auto 18px;line-height:1.55;font-size:.94rem}
+  .lead b{color:var(--txt)}
+
+  .stage{
+    width:100%;max-width:820px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:22px 22px 26px;
+    box-shadow:0 10px 40px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04);
+  }
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .progress-label{font-weight:700;color:var(--muted);font-size:.9rem}
+  .progress-label b{color:var(--txt);font-size:1.05rem}
+  .score-box{font-weight:600;color:var(--muted);font-size:.9rem}
+  .score-box b{color:var(--orange);font-size:1.35rem}
+  .bar{height:8px;background:#ececf0;border-radius:999px;overflow:hidden;margin-bottom:20px}
+  .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#5aa9ff,#0071e3);border-radius:999px;transition:width .3s ease}
+
+  .equation{
+    text-align:center;
+    font-size:clamp(1.5rem,4.6vw,2.5rem);
+    line-height:2.3;
+    padding:8px 4px 14px;
+    word-break:break-word;
+  }
+  .equation sup{font-size:.58em;vertical-align:super}
+
+  /* fraction (affichage) */
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .14em;line-height:1.15}
+  .frac .fnum{padding:0 .4em;border-bottom:2.5px solid currentColor}
+  .frac .fden{padding:0 .4em}
+
+  .answer-title{text-align:center;color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600}
+
+  .ans-frac{display:flex;flex-direction:column;align-items:stretch;width:min(360px,86vw);margin:0 auto 12px}
+  .ans-frac input{
+    font-size:1.5rem;text-align:center;padding:11px 10px;
+    border:2px solid var(--line);border-radius:14px;outline:none;
+    color:var(--blue);background:#fff;font-variant-numeric:tabular-nums;
+  }
+  .ans-frac input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,113,227,.15)}
+  .ans-frac input::placeholder{color:#c7c7cc;font-size:1rem}
+  .ans-frac .fbar{height:3px;background:var(--txt);border-radius:3px;margin:8px 6px}
+  .ans-frac.shake{animation:shake .4s ease}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-9px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(4px)}
+  }
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px}
+  .toolbar button{padding:8px 14px;border-radius:10px;font-size:.95rem;font-weight:700;background:#f2f2f7;border:1px solid var(--line);min-width:44px}
+  .toolbar button:hover{background:#e8e8ed}
+  .toolbar button sup{font-size:.7em}
+
+  .msg{text-align:center;font-weight:600;min-height:28px;line-height:1.5;color:var(--muted);margin-bottom:14px}
+  .msg.ok{color:var(--ok-text)}
+  .msg.no{color:var(--pink)}
+  .msg .sol{display:inline-flex;vertical-align:middle;font-size:1.15rem;color:var(--txt)}
+
+  .buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{font:inherit;font-weight:600;padding:11px 20px;border-radius:12px;cursor:pointer;color:var(--txt);background:#f2f2f7;border:1px solid transparent;transition:background .15s,transform .12s}
+  button:hover{background:#e8e8ed}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--blue);color:#fff;font-size:1.02rem;padding:12px 26px;box-shadow:0 4px 14px rgba(0,113,227,.3)}
+  button.primary:hover{background:var(--blue-dark)}
+  button.ghost{background:#fff;border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:default;transform:none}
+
+  .overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .25s ease}
+  .overlay.show{opacity:1}
+  .overlay img{width:min(38vw,220px);height:auto;filter:drop-shadow(0 14px 34px rgba(0,0,0,.28));transform:scale(.7);transition:transform .32s cubic-bezier(.2,1.4,.4,1)}
+  .overlay.show img{transform:scale(1)}
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:26px;line-height:1.7}
+  footer a{color:var(--blue);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
+  @media(max-width:600px){
+    .stage{padding:18px 14px 22px;border-radius:20px}
+    .equation{line-height:2.1}
+    .toolbar button{padding:8px 11px}
+  }
+</style>
+</head>
+<body>
+
+  <h1>Les équations à réduire</h1>
+  <p class="lead">
+    Développe et réduis chaque expression en une seule fraction. Écris le
+    <b>numérateur</b> au-dessus et le <b>dénominateur</b> en dessous.
+    Tu peux utiliser <b>x</b>, <b>x^2</b> (ou <b>x²</b>), les parenthèses et les produits.
+    <b>+1 point</b> par bonne réponse.
+  </p>
+
+  <div class="stage">
+    <div class="topbar">
+      <div class="progress-label">Équation <b id="pos">1</b> / <b id="total">200</b></div>
+      <div class="score-box">Points : <b id="score">0</b></div>
+    </div>
+    <div class="bar"><span id="barFill"></span></div>
+
+    <div class="equation" id="equation"></div>
+
+    <div class="answer-title">Ta réponse</div>
+    <div class="ans-frac" id="ansFrac">
+      <input type="text" id="ansNum" placeholder="numérateur" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
+      <div class="fbar"></div>
+      <input type="text" id="ansDen" placeholder="dénominateur" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <button type="button" data-ins="x">x</button>
+      <button type="button" data-ins="^2"><span>x<sup>2</sup></span></button>
+      <button type="button" data-ins="+">+</button>
+      <button type="button" data-ins="-">−</button>
+      <button type="button" data-ins="(">(</button>
+      <button type="button" data-ins=")">)</button>
+      <button type="button" data-ins="*">×</button>
+      <button type="button" id="btnClear">Effacer</button>
+    </div>
+
+    <p class="msg" id="msg"></p>
+
+    <div class="buttons">
+      <button type="button" class="ghost" id="btnPrev">◀ Précédent</button>
+      <button type="button" class="primary" id="btnCheck">Valider</button>
+      <button type="button" class="ghost" id="btnSol">Solution</button>
+      <button type="button" class="ghost" id="btnSkip">Passer ▶</button>
+    </div>
+    <div class="buttons" style="margin-top:12px">
+      <button type="button" class="ghost" id="btnReset">Recommencer à zéro</button>
+    </div>
+  </div>
+
+  <footer>
+    <a href="index.html">Accueil</a> &nbsp;•&nbsp;
+    <a href="bases.html">Les bases de numération</a> &nbsp;•&nbsp;
+    <a href="calcul.html">Le calcul mental</a> &nbsp;•&nbsp;
+    <a href="multiplications.html">Les tables</a>
+  </footer>
+
+<div class="overlay" id="overlay"><img id="overlayImg" src="TresContent.png" alt=""></div>
+<canvas id="confetti"></canvas>
+
+<!-- ===================== MODULE DE CALCUL ALGÉBRIQUE ===================== -->
+<script>
+window.MB = (function(){
+  "use strict";
+
+  /* ---------- polynômes (tableaux de coefficients, degré croissant) ---------- */
+  function ptrim(a){ var i=a.length-1; while(i>0 && a[i]===0) i--; return a.slice(0,i+1); }
+  function padd(a,b){ var n=Math.max(a.length,b.length), r=[], i; for(i=0;i<n;i++) r[i]=(a[i]||0)+(b[i]||0); return ptrim(r); }
+  function psub(a,b){ var n=Math.max(a.length,b.length), r=[], i; for(i=0;i<n;i++) r[i]=(a[i]||0)-(b[i]||0); return ptrim(r); }
+  function pmul(a,b){
+    var r=new Array(a.length+b.length-1), i, j;
+    for(i=0;i<r.length;i++) r[i]=0;
+    for(i=0;i<a.length;i++) for(j=0;j<b.length;j++) r[i+j]+=a[i]*b[j];
+    return ptrim(r);
+  }
+  function pneg(a){ return a.map(function(c){ return -c; }); }
+  function ppow(a,n){ var r=[1], i; for(i=0;i<n;i++) r=pmul(r,a); return r; }
+  function peq(a,b){
+    a=ptrim(a); b=ptrim(b);
+    if(a.length!==b.length) return false;
+    for(var i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
+    return true;
+  }
+
+  /* ---------- lecture d'une expression polynomiale tapée par l'élève ---------- */
+  function parsePoly(str){
+    var s = String(str).replace(/\s+/g,"")
+      .replace(/−/g,"-").replace(/[×·∙*]/g,"*").replace(/÷/g,"/")
+      .replace(/²/g,"^2").replace(/³/g,"^3").replace(/⁴/g,"^4");
+    if(!s) return null;
+    var pos=0;
+
+    function parseExpr(){
+      var node=parseTerm();
+      if(node===null) return null;
+      while(pos<s.length && (s[pos]==="+"||s[pos]==="-")){
+        var op=s[pos++], rhs=parseTerm();
+        if(rhs===null) return null;
+        node = (op==="+") ? padd(node,rhs) : psub(node,rhs);
+      }
+      return node;
+    }
+    function parseTerm(){
+      var node=parseUnary();
+      if(node===null) return null;
+      while(pos<s.length){
+        var c=s[pos];
+        if(c==="*"){ pos++; var r1=parseUnary(); if(r1===null) return null; node=pmul(node,r1); }
+        else if(c==="("||c==="x"||c==="X"||(c>="0"&&c<="9")){
+          var r2=parseUnary(); if(r2===null) return null; node=pmul(node,r2);
+        }
+        else break;
+      }
+      return node;
+    }
+    function parseUnary(){
+      if(pos<s.length && (s[pos]==="+"||s[pos]==="-")){
+        var op=s[pos++], v=parseUnary();
+        if(v===null) return null;
+        return op==="-"?pneg(v):v;
+      }
+      return parsePower();
+    }
+    function parsePower(){
+      var base=parseAtom();
+      if(base===null) return null;
+      if(pos<s.length && s[pos]==="^"){
+        pos++;
+        var e=parseNumber();
+        if(e===null || e<0) return null;
+        base=ppow(base,e);
+      }
+      return base;
+    }
+    function parseAtom(){
+      if(pos>=s.length) return null;
+      var c=s[pos];
+      if(c==="("){ pos++; var e=parseExpr(); if(e===null || s[pos]!==")") return null; pos++; return e; }
+      if(c==="x"||c==="X"){ pos++; return [0,1]; }
+      if(c>="0"&&c<="9"){ var n=parseNumber(); return n===null?null:[n]; }
+      return null;
+    }
+    function parseNumber(){
+      var start=pos;
+      while(pos<s.length && s[pos]>="0" && s[pos]<="9") pos++;
+      if(pos===start) return null;
+      return parseInt(s.slice(start,pos),10);
+    }
+
+    var res=parseExpr();
+    if(res===null || pos!==s.length) return null;
+    return res;
+  }
+
+  /* ---------- arbre d'expression ---------- */
+  function C(v){ return {t:'const',v:v}; }
+  function X(){ return {t:'var'}; }
+  function ADD(a,b){ return {t:'add',a:a,b:b}; }
+  function SUB(a,b){ return {t:'sub',a:a,b:b}; }
+  function MUL(a,b){ return {t:'mul',a:a,b:b}; }
+  function DIV(a,b){ return {t:'div',a:a,b:b}; }
+
+  function evalRat(node){
+    var a, b;
+    if(node.t==='const') return {n:[node.v], d:[1]};
+    if(node.t==='var')   return {n:[0,1], d:[1]};
+    if(node.t==='pow'){ a=evalRat(node.a); return {n:ppow(a.n,node.n), d:ppow(a.d,node.n)}; }
+    if(node.t==='mul'){ a=evalRat(node.a); b=evalRat(node.b); return {n:pmul(a.n,b.n), d:pmul(a.d,b.d)}; }
+    if(node.t==='div'){ a=evalRat(node.a); b=evalRat(node.b); return {n:pmul(a.n,b.d), d:pmul(a.d,b.n)}; }
+    if(node.t==='add'){ a=evalRat(node.a); b=evalRat(node.b); return {n:padd(pmul(a.n,b.d),pmul(b.n,a.d)), d:pmul(a.d,b.d)}; }
+    if(node.t==='sub'){ a=evalRat(node.a); b=evalRat(node.b); return {n:psub(pmul(a.n,b.d),pmul(b.n,a.d)), d:pmul(a.d,b.d)}; }
+  }
+
+  /* ---------- rendu HTML (fractions empilées) ---------- */
+  function prec(n){ return (n.t==='add'||n.t==='sub')?1:((n.t==='mul'||n.t==='div')?2:(n.t==='pow'?3:4)); }
+  function fracHtml(num,den){ return '<span class="frac"><span class="fnum">'+num+'</span><span class="fden">'+den+'</span></span>'; }
+  function collectMul(node,out){ if(node.t==='mul'){ collectMul(node.a,out); collectMul(node.b,out); } else out.push(node); }
+  function renderMul(node){
+    var fs=[]; collectMul(node,fs);
+    var parts=[], i=0;
+    if(fs[0].t==='const'){
+      var c=fs[0].v;
+      if(fs.length===1) return String(c);
+      var second=fs[1];
+      if(second.t==='var'||second.t==='pow'){
+        if(c===1) parts.push(renderNode(second,2));
+        else if(c===-1) parts.push('−'+renderNode(second,2));
+        else parts.push(String(c)+renderNode(second,2));
+        i=2;
+      } else { parts.push(String(c)); i=1; }
+    }
+    for(;i<fs.length;i++) parts.push(renderNode(fs[i],2));
+    return parts.join('·');
+  }
+  function renderSum(a,b,op){
+    var left=renderNode(a,1);
+    if(b.t==='const'){
+      var s=(op==='+'?1:-1)*(b.v>=0?1:-1);
+      return left + (s<0?' − ':' + ') + Math.abs(b.v);
+    }
+    return left + ' ' + op + ' ' + renderNode(b,2);
+  }
+  function renderNode(node,parentPrec){
+    parentPrec=parentPrec||0;
+    var html="";
+    if(node.t==='const') html=String(node.v);
+    else if(node.t==='var') html='x';
+    else if(node.t==='pow') html=renderNode(node.a,3)+'<sup>'+node.n+'</sup>';
+    else if(node.t==='mul') html=renderMul(node);
+    else if(node.t==='div') html=fracHtml(renderNode(node.a,0),renderNode(node.b,0));
+    else if(node.t==='add'||node.t==='sub') html=renderSum(node.a,node.b,node.t==='add'?'+':'−');
+    if(prec(node)<parentPrec) html='('+html+')';
+    return html;
+  }
+  function polyToHtml(p){
+    p=ptrim(p);
+    var terms=[], e;
+    for(e=p.length-1;e>=0;e--){
+      var c=p[e]; if(c===0) continue;
+      var sign=c<0?'−':'+';
+      var ac=Math.abs(c);
+      var coef=(ac===1 && e>0)?'':String(ac);
+      var vv=e===0?'':(e===1?'x':'x<sup>'+e+'</sup>');
+      terms.push({sign:sign,text:coef+vv});
+    }
+    if(!terms.length) return '0';
+    var s=(terms[0].sign==='−'?'−':'')+terms[0].text;
+    for(var i=1;i<terms.length;i++) s+=' '+terms[i].sign+' '+terms[i].text;
+    return s;
+  }
+
+  /* ---------- correction ---------- */
+  function gradeAnswer(numStr,denStr,rat){
+    var num=parsePoly(numStr);
+    if(num===null) return {ok:false, why:'num'};
+    var raw=(denStr==null)?"":String(denStr).trim();
+    var den=(raw==="")?[1]:parsePoly(denStr);
+    if(den===null) return {ok:false, why:'den'};
+    if(den.length===1 && den[0]===0) return {ok:false, why:'zero'};
+    if(peq(pmul(num,rat.d), pmul(rat.n,den))) return {ok:true};
+    return {ok:false, why:'wrong'};
+  }
+
+  /* ---------- générateurs d'équations ---------- */
+  var rng=null;
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function ri(a,b){ return a+Math.floor(rng()*(b-a+1)); }
+  function XP(p){ return ADD(X(),C(p)); }
+  function AXB(a,b){ return ADD(MUL(C(a),X()),C(b)); }
+  function bAvoid(ap){ var b=ri(1,9); if(b===ap) b=(ap>=9)?ap-1:ap+1; return b; }
+  function distinct2(){ var p=ri(1,8), q=ri(1,8); while(q===p) q=ri(1,8); return [p,q]; }
+  function distinct3(){ var p=ri(1,8),q=ri(1,8),r=ri(1,8); while(q===p)q=ri(1,8); while(r===p||r===q)r=ri(1,8); return [p,q,r]; }
+
+  var GENS = [
+    /* 0 : a/(x+p) + b/(x+q) */
+    function(){ var pq=distinct2(); return ADD(DIV(C(ri(1,6)),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 1 : a/(x+p) − b/(x+q) */
+    function(){ var pq=distinct2(); return SUB(DIV(C(ri(1,6)),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 2 : k + a/(x+p) */
+    function(){ return ADD(C(ri(1,9)), DIV(C(ri(1,6)),XP(ri(1,8)))); },
+    /* 3 : a/(x+p) − k */
+    function(){ return SUB(DIV(C(ri(1,6)),XP(ri(1,8))), C(ri(1,9))); },
+    /* 4 : (a x + b)/(x+p) + k   (b ≠ a p) */
+    function(){ var a=ri(1,5), p=ri(1,8), k=ri(1,7), b=bAvoid(a*p); return ADD(DIV(AXB(a,b),XP(p)), C(k)); },
+    /* 5 : trois fractions */
+    function(){ var pqr=distinct3(); return ADD(ADD(DIV(C(ri(1,5)),XP(pqr[0])), DIV(C(ri(1,5)),XP(pqr[1]))), DIV(C(ri(1,5)),XP(pqr[2]))); },
+    /* 6 : a/(x+p) × b/(x+q) */
+    function(){ var pq=distinct2(); return MUL(DIV(C(ri(1,6)),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 7 : a/(x+p) ÷ b/(x+q) */
+    function(){ var pq=distinct2(); return DIV(DIV(C(ri(1,6)),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 8 : (a x + b)/(x+p) + c/(x+q)   (b ≠ a p) */
+    function(){ var pq=distinct2(), a=ri(1,5), b=bAvoid(a*pq[0]); return ADD(DIV(AXB(a,b),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 9 : (a x + b)/(x+p) − c/(x+q)   (b ≠ a p) */
+    function(){ var pq=distinct2(), a=ri(1,5), b=bAvoid(a*pq[0]); return SUB(DIV(AXB(a,b),XP(pq[0])), DIV(C(ri(1,6)),XP(pq[1]))); },
+    /* 10 : k × a/(x+p) */
+    function(){ return MUL(C(ri(2,6)), DIV(C(ri(1,6)),XP(ri(1,8)))); },
+    /* 11 : (a x + b)/(x+p) + (c x + d)/(x+q)  (pas de facteur commun) */
+    function(){ var pq=distinct2(), a=ri(1,4), b=bAvoid(a*pq[0]), c=ri(1,4), d=bAvoid(c*pq[1]); return ADD(DIV(AXB(a,b),XP(pq[0])), DIV(AXB(c,d),XP(pq[1]))); },
+    /* 12 : (a x + b)/(x+p) − (c x + d)/(x+q)  (pas de facteur commun) */
+    function(){ var pq=distinct2(), a=ri(1,4), b=bAvoid(a*pq[0]), c=ri(1,4), d=bAvoid(c*pq[1]); return SUB(DIV(AXB(a,b),XP(pq[0])), DIV(AXB(c,d),XP(pq[1]))); }
+  ];
+
+  function buildProblems(seed, count){
+    count = count || 200;
+    rng = mulberry32(seed);
+    var list=[], seen={}, guard=0;
+    while(list.length<count && guard<20000){
+      var gen = GENS[list.length % GENS.length];
+      guard++;
+      var ast = gen();
+      var rat = evalRat(ast);
+      if(rat.d.length < 2) continue;                       /* le dénominateur doit dépendre de x */
+      if(rat.n.length===1 && rat.n[0]===0) continue;        /* numérateur nul */
+      var disp = renderNode(ast,0);
+      if(seen[disp]) continue;
+      seen[disp]=1;
+      list.push({ ast:ast, rat:rat, display:disp });
+    }
+    return list;
+  }
+
+  return {
+    parsePoly:parsePoly, peq:peq, pmul:pmul, psub:psub, padd:padd,
+    evalRat:evalRat, gradeAnswer:gradeAnswer, renderNode:renderNode,
+    polyToHtml:polyToHtml, buildProblems:buildProblems
+  };
+})();
+</script>
+
+<!-- ===================== INTERFACE ===================== -->
+<script>
+(function(){
+  "use strict";
+  var MB = window.MB;
+
+  var COUNT = 200;
+  var SEED = 20240517;
+  var STORE = "equations_reduire_v1";
+
+  var problems = MB.buildProblems(SEED, COUNT);
+
+  var state = { index:0, score:0, solved:{} };
+
+  /* ---------- sons / confettis / corgi ---------- */
+  var SOUNDS = ["fanfare.mp3","chien.mp3"];
+  var soundPool = SOUNDS.map(function(src){ var a=new Audio(src); a.preload="auto"; return a; });
+  function playBravoSound(){
+    if(!soundPool.length) return;
+    try{ var a=soundPool[Math.floor(Math.random()*soundPool.length)]; a.currentTime=0; var p=a.play(); if(p&&p.catch)p.catch(function(){}); }catch(e){}
+  }
+  var canvas=document.getElementById("confetti"), ctx=canvas.getContext("2d"), parts=[], rafConf=null;
+  var COLORS=["#ff5c8a","#ffd23f","#4ade80","#5aa9ff","#f97316","#a855f7","#ffffff"];
+  function sizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  sizeCanvas(); window.addEventListener("resize", sizeCanvas);
+  function launchConfetti(){
+    if(parts.length>120) return;
+    for(var i=0;i<45;i++) parts.push({x:Math.random()*canvas.width,y:-20-Math.random()*canvas.height*0.5,vx:(Math.random()-0.5)*3,vy:2+Math.random()*4,w:6+Math.random()*8,h:8+Math.random()*10,rot:Math.random()*Math.PI,vr:(Math.random()-0.5)*0.35,color:COLORS[Math.floor(Math.random()*COLORS.length)]});
+    if(!rafConf) rafConf=requestAnimationFrame(tickConfetti);
+  }
+  function tickConfetti(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i=parts.length-1;i>=0;i--){
+      var p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.vx*=0.995; p.rot+=p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      if(p.y>canvas.height+50) parts.splice(i,1);
+    }
+    if(parts.length) rafConf=requestAnimationFrame(tickConfetti);
+    else { rafConf=null; ctx.clearRect(0,0,canvas.width,canvas.height); }
+  }
+  var overlay=document.getElementById("overlay"), overlayImg=document.getElementById("overlayImg"), overlayTimer=null;
+  function flashCorgi(kind){
+    overlayImg.src=(kind==="happy")?"TresContent.png":(kind==="cry")?"Pleurs.png":"Triste.png";
+    overlay.classList.add("show");
+    if(overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer=setTimeout(function(){ overlay.classList.remove("show"); }, kind==="happy"?1000:900);
+  }
+
+  /* ---------- éléments ---------- */
+  var posEl=document.getElementById("pos");
+  var totalEl=document.getElementById("total");
+  var scoreEl=document.getElementById("score");
+  var barFill=document.getElementById("barFill");
+  var eqEl=document.getElementById("equation");
+  var ansFrac=document.getElementById("ansFrac");
+  var ansNum=document.getElementById("ansNum");
+  var ansDen=document.getElementById("ansDen");
+  var msgEl=document.getElementById("msg");
+
+  totalEl.textContent=COUNT;
+
+  function save(){
+    try{ localStorage.setItem(STORE, JSON.stringify({index:state.index, score:state.score, solved:state.solved})); }catch(e){}
+  }
+  function load(){
+    try{
+      var raw=localStorage.getItem(STORE); if(!raw) return;
+      var o=JSON.parse(raw);
+      if(o && typeof o.index==="number"){ state.index=Math.max(0,Math.min(COUNT-1,o.index)); state.score=o.score||0; state.solved=o.solved||{}; }
+    }catch(e){}
+  }
+
+  function render(){
+    var p=problems[state.index];
+    eqEl.innerHTML=p.display;
+    posEl.textContent=state.index+1;
+    scoreEl.textContent=state.score;
+    barFill.style.width=((state.index+1)/COUNT*100)+"%";
+    ansNum.value=""; ansDen.value="";
+    msgEl.textContent=""; msgEl.className="msg";
+    ansNum.focus();
+  }
+
+  function solutionHtml(p){
+    var den=p.rat.d;
+    if(den.length===1 && den[0]===1) return '<span class="sol">'+MB.polyToHtml(p.rat.n)+'</span>';
+    return '<span class="sol"><span class="frac"><span class="fnum">'+MB.polyToHtml(p.rat.n)+'</span><span class="fden">'+MB.polyToHtml(p.rat.d)+'</span></span></span>';
+  }
+
+  function check(){
+    var p=problems[state.index];
+    var res=MB.gradeAnswer(ansNum.value, ansDen.value, p.rat);
+    if(res.ok){
+      if(!state.solved[state.index]){ state.solved[state.index]=1; state.score++; }
+      scoreEl.textContent=state.score;
+      playBravoSound(); launchConfetti(); flashCorgi("happy");
+      msgEl.textContent="Bravo ! +1 point. La réponse est correcte.";
+      msgEl.className="msg ok";
+      save();
+      setTimeout(function(){ if(state.index<COUNT-1){ state.index++; save(); render(); } }, 1000);
+    } else {
+      ansFrac.classList.remove("shake"); void ansFrac.offsetWidth; ansFrac.classList.add("shake");
+      flashCorgi("sad");
+      if(res.why==="num" || res.why==="den"){
+        msgEl.textContent="Je n'arrive pas à lire ton expression. Utilise x, x^2, +, -, *, ( ).";
+      } else if(res.why==="zero"){
+        msgEl.textContent="Le dénominateur ne peut pas être nul.";
+      } else {
+        msgEl.textContent="Ce n'est pas encore ça. Développe puis réduis au même dénominateur.";
+      }
+      msgEl.className="msg no";
+    }
+  }
+
+  function showSolution(){
+    var p=problems[state.index];
+    msgEl.innerHTML="Solution : "+solutionHtml(p);
+    msgEl.className="msg";
+  }
+
+  function go(delta){
+    var n=state.index+delta;
+    if(n<0) n=0;
+    if(n>COUNT-1) n=COUNT-1;
+    state.index=n; save(); render();
+  }
+
+  document.getElementById("btnCheck").addEventListener("click", check);
+  document.getElementById("btnSol").addEventListener("click", showSolution);
+  document.getElementById("btnSkip").addEventListener("click", function(){ if(state.index<COUNT-1){ state.index++; save(); render(); } });
+  document.getElementById("btnPrev").addEventListener("click", function(){ go(-1); });
+  document.getElementById("btnReset").addEventListener("click", function(){
+    state={index:0,score:0,solved:{}}; save(); render();
+  });
+
+  /* insertion dans le champ actif */
+  var lastField=ansNum;
+  ansNum.addEventListener("focus", function(){ lastField=ansNum; });
+  ansDen.addEventListener("focus", function(){ lastField=ansDen; });
+  function insert(text){
+    var el=lastField;
+    var start=el.selectionStart||0, end=el.selectionEnd||0, v=el.value;
+    el.value=v.slice(0,start)+text+v.slice(end);
+    var c=start+text.length; el.focus(); el.setSelectionRange(c,c);
+  }
+  document.getElementById("toolbar").addEventListener("click", function(evt){
+    var b=evt.target.closest("button[data-ins]"); if(!b) return;
+    insert(b.getAttribute("data-ins"));
+  });
+  document.getElementById("btnClear").addEventListener("click", function(){ ansNum.value=""; ansDen.value=""; ansNum.focus(); });
+
+  document.addEventListener("keydown", function(evt){
+    if(evt.key==="Enter"){ evt.preventDefault(); check(); }
+  });
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>

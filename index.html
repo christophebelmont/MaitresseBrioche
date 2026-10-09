@@ -20,6 +20,8 @@
     --purple-bg:#f4e9fd;
     --teal:#30b0c7;
     --teal-bg:#e4f6f9;
+    --pink:#ff375f;
+    --pink-bg:#ffe8ee;
   }
   *{box-sizing:border-box}
   body{
@@ -82,6 +84,7 @@
   .card.calcul .icon{background:var(--purple-bg);color:var(--purple)}
   .card.multipli .icon{background:var(--blue-bg);color:var(--blue)}
   .card.bases .icon{background:var(--teal-bg);color:var(--teal)}
+  .card.equations .icon{background:var(--pink-bg);color:var(--pink)}
 
   @media(max-width:520px){
     body{padding:40px 16px}
@@ -158,6 +161,17 @@
         </svg>
       </span>
       <span class="name">Les bases de numération</span>
+    </a>
+
+    <a class="card equations" href="equations.html">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="3.5" width="12" height="5" rx="2"/>
+          <path d="M4 12h16"/>
+          <rect x="6" y="15.5" width="12" height="5" rx="2"/>
+        </svg>
+      </span>
+      <span class="name">Les équations à réduire</span>
     </a>
 
   </nav>
