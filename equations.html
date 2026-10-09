@@ -100,7 +100,31 @@
   .msg{text-align:center;font-weight:600;min-height:28px;line-height:1.5;color:var(--muted);margin-bottom:14px}
   .msg.ok{color:var(--ok-text)}
   .msg.no{color:var(--pink)}
-  .msg .sol{display:inline-flex;vertical-align:middle;font-size:1.15rem;color:var(--txt)}
+
+  .status{text-align:center;font-weight:700;font-size:.9rem;min-height:22px;margin:-8px 0 10px;letter-spacing:.3px}
+  .status.ok{color:var(--ok-text)}
+  .status.no{color:var(--pink)}
+
+  .history{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+  .history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .history-title{font-weight:700;color:var(--muted);font-size:.86rem;text-transform:uppercase;letter-spacing:.6px}
+  .legend{display:flex;align-items:center;gap:12px;font-size:.76rem;color:var(--muted);flex-wrap:wrap}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
+  .legend .lg-ok{background:#bff0cf;border:1px solid #a8e6bd}
+  .legend .lg-no{background:#ffd0da;border:1px solid #ffb3c4}
+  .legend .lg-none{background:#f2f2f7;border:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(24px,1fr));gap:5px}
+  .grid .cell{
+    width:100%;aspect-ratio:1;min-width:0;padding:0;border-radius:7px;
+    border:1px solid var(--line);background:#f2f2f7;color:var(--muted);
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  }
+  .grid .cell.ok{background:#dff6e6;border-color:#a8e6bd;color:var(--ok-text)}
+  .grid .cell.ok::before{content:"✓"}
+  .grid .cell.no{background:#ffe3ea;border-color:#ffb3c4;color:var(--pink)}
+  .grid .cell.no::before{content:"✗"}
+  .grid .cell.cur{outline:2px solid var(--blue);outline-offset:1px}
+  .grid .cell:hover{filter:brightness(.96)}
 
   .buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   button{font:inherit;font-weight:600;padding:11px 20px;border-radius:12px;cursor:pointer;color:var(--txt);background:#f2f2f7;border:1px solid transparent;transition:background .15s,transform .12s}
@@ -135,7 +159,8 @@
     Développe et réduis chaque expression en une seule fraction. Écris le
     <b>numérateur</b> au-dessus et le <b>dénominateur</b> en dessous.
     Tu peux utiliser <b>x</b>, <b>x^2</b> (ou <b>x²</b>), les parenthèses et les produits.
-    <b>+1 point</b> par bonne réponse.
+    <b>+1 point</b> par bonne réponse. En cas d'erreur, une <b>croix ✗</b> marque l'équation :
+    tu pourras y revenir plus tard.
   </p>
 
   <div class="stage">
@@ -146,6 +171,7 @@
     <div class="bar"><span id="barFill"></span></div>
 
     <div class="equation" id="equation"></div>
+    <div class="status" id="status"></div>
 
     <div class="answer-title">Ta réponse</div>
     <div class="ans-frac" id="ansFrac">
@@ -156,7 +182,7 @@
 
     <div class="toolbar" id="toolbar">
       <button type="button" data-ins="x">x</button>
-      <button type="button" data-ins="^2"><span>x<sup>2</sup></span></button>
+      <button type="button" data-ins="²">x²</button>
       <button type="button" data-ins="+">+</button>
       <button type="button" data-ins="-">−</button>
       <button type="button" data-ins="(">(</button>
@@ -170,11 +196,23 @@
     <div class="buttons">
       <button type="button" class="ghost" id="btnPrev">◀ Précédent</button>
       <button type="button" class="primary" id="btnCheck">Valider</button>
-      <button type="button" class="ghost" id="btnSol">Solution</button>
       <button type="button" class="ghost" id="btnSkip">Passer ▶</button>
     </div>
     <div class="buttons" style="margin-top:12px">
+      <button type="button" class="ghost" id="btnReview">↻ Revoir les erreurs</button>
       <button type="button" class="ghost" id="btnReset">Recommencer à zéro</button>
+    </div>
+
+    <div class="history">
+      <div class="history-head">
+        <span class="history-title">Historique des 200 équations</span>
+        <span class="legend">
+          <span><i class="lg-ok"></i>juste</span>
+          <span><i class="lg-no"></i>à revoir</span>
+          <span><i class="lg-none"></i>à faire</span>
+        </span>
+      </div>
+      <div class="grid" id="grid"></div>
     </div>
   </div>
 
@@ -445,11 +483,17 @@ window.MB = (function(){
 
   var COUNT = 200;
   var SEED = 20240517;
-  var STORE = "equations_reduire_v1";
+  var STORE = "equations_reduire_v2";
 
   var problems = MB.buildProblems(SEED, COUNT);
 
-  var state = { index:0, score:0, solved:{} };
+  /* ordre aléatoire à chaque ouverture, pour ne pas toujours commencer par les mêmes */
+  for (var si=problems.length-1; si>0; si--){
+    var sj=Math.floor(Math.random()*(si+1));
+    var st=problems[si]; problems[si]=problems[sj]; problems[sj]=st;
+  }
+
+  var state = { index:0, score:0, correct:{}, wrong:{} };
 
   /* ---------- sons / confettis / corgi ---------- */
   var SOUNDS = ["fanfare.mp3","chien.mp3"];
@@ -495,17 +539,24 @@ window.MB = (function(){
   var ansNum=document.getElementById("ansNum");
   var ansDen=document.getElementById("ansDen");
   var msgEl=document.getElementById("msg");
+  var statusEl=document.getElementById("status");
+  var gridEl=document.getElementById("grid");
 
   totalEl.textContent=COUNT;
 
   function save(){
-    try{ localStorage.setItem(STORE, JSON.stringify({index:state.index, score:state.score, solved:state.solved})); }catch(e){}
+    try{ localStorage.setItem(STORE, JSON.stringify({index:state.index, score:state.score, correct:state.correct, wrong:state.wrong})); }catch(e){}
   }
   function load(){
     try{
       var raw=localStorage.getItem(STORE); if(!raw) return;
-      var o=JSON.parse(raw);
-      if(o && typeof o.index==="number"){ state.index=Math.max(0,Math.min(COUNT-1,o.index)); state.score=o.score||0; state.solved=o.solved||{}; }
+      var o=JSON.parse(raw); if(!o) return;
+      if(typeof o.index==="number") state.index=Math.max(0,Math.min(COUNT-1,o.index));
+      state.correct=o.correct||o.solved||{};
+      state.wrong=o.wrong||{};
+      /* une équation réussie ne reste pas "à revoir" */
+      Object.keys(state.correct).forEach(function(k){ delete state.wrong[k]; });
+      state.score=Object.keys(state.correct).length;
     }catch(e){}
   }
 
@@ -517,44 +568,62 @@ window.MB = (function(){
     barFill.style.width=((state.index+1)/COUNT*100)+"%";
     ansNum.value=""; ansDen.value="";
     msgEl.textContent=""; msgEl.className="msg";
+    renderStatus();
+    renderHistory();
     ansNum.focus();
   }
 
-  function solutionHtml(p){
-    var den=p.rat.d;
-    if(den.length===1 && den[0]===1) return '<span class="sol">'+MB.polyToHtml(p.rat.n)+'</span>';
-    return '<span class="sol"><span class="frac"><span class="fnum">'+MB.polyToHtml(p.rat.n)+'</span><span class="fden">'+MB.polyToHtml(p.rat.d)+'</span></span></span>';
+  function renderStatus(){
+    var d=problems[state.index].display;
+    if(state.correct[d]){ statusEl.className="status ok"; statusEl.textContent="✓ Déjà réussie"; }
+    else if(state.wrong[d]){ statusEl.className="status no"; statusEl.textContent="✗ À revoir"; }
+    else { statusEl.className="status"; statusEl.textContent=""; }
+  }
+
+  function renderHistory(){
+    var html="";
+    for(var i=0;i<COUNT;i++){
+      var d=problems[i].display;
+      var cls="cell";
+      if(state.correct[d]) cls+=" ok";
+      else if(state.wrong[d]) cls+=" no";
+      if(i===state.index) cls+=" cur";
+      html+='<button type="button" class="'+cls+'" data-i="'+i+'" aria-label="équation '+(i+1)+'"></button>';
+    }
+    gridEl.innerHTML=html;
   }
 
   function check(){
     var p=problems[state.index];
     var res=MB.gradeAnswer(ansNum.value, ansDen.value, p.rat);
     if(res.ok){
-      if(!state.solved[state.index]){ state.solved[state.index]=1; state.score++; }
+      if(!state.correct[p.display]){ state.correct[p.display]=1; }
+      delete state.wrong[p.display];
+      state.score=Object.keys(state.correct).length;
       scoreEl.textContent=state.score;
+      renderStatus();
+      renderHistory();
       playBravoSound(); launchConfetti(); flashCorgi("happy");
       msgEl.textContent="Bravo ! +1 point. La réponse est correcte.";
       msgEl.className="msg ok";
       save();
       setTimeout(function(){ if(state.index<COUNT-1){ state.index++; save(); render(); } }, 1000);
     } else {
+      if(!state.correct[p.display]) state.wrong[p.display]=1;
       ansFrac.classList.remove("shake"); void ansFrac.offsetWidth; ansFrac.classList.add("shake");
       flashCorgi("sad");
       if(res.why==="num" || res.why==="den"){
-        msgEl.textContent="Je n'arrive pas à lire ton expression. Utilise x, x^2, +, -, *, ( ).";
+        msgEl.textContent="Je n'arrive pas à lire ton expression. Utilise x, x², +, −, ×, ( ).";
       } else if(res.why==="zero"){
         msgEl.textContent="Le dénominateur ne peut pas être nul.";
       } else {
-        msgEl.textContent="Ce n'est pas encore ça. Développe puis réduis au même dénominateur.";
+        msgEl.textContent="Ce n'est pas encore ça. Cette équation est marquée d'une croix : tu pourras y revenir.";
       }
       msgEl.className="msg no";
+      renderStatus();
+      renderHistory();
+      save();
     }
-  }
-
-  function showSolution(){
-    var p=problems[state.index];
-    msgEl.innerHTML="Solution : "+solutionHtml(p);
-    msgEl.className="msg";
   }
 
   function go(delta){
@@ -564,12 +633,25 @@ window.MB = (function(){
     state.index=n; save(); render();
   }
 
+  function gotoWrong(){
+    for(var k=1;k<=COUNT;k++){
+      var i=(state.index+k)%COUNT;
+      if(state.wrong[problems[i].display]){ state.index=i; save(); render(); return; }
+    }
+    msgEl.textContent="Aucune erreur à revoir pour l'instant. Bravo !";
+    msgEl.className="msg ok";
+  }
+
   document.getElementById("btnCheck").addEventListener("click", check);
-  document.getElementById("btnSol").addEventListener("click", showSolution);
   document.getElementById("btnSkip").addEventListener("click", function(){ if(state.index<COUNT-1){ state.index++; save(); render(); } });
   document.getElementById("btnPrev").addEventListener("click", function(){ go(-1); });
+  document.getElementById("btnReview").addEventListener("click", gotoWrong);
+  gridEl.addEventListener("click", function(evt){
+    var b=evt.target.closest("button[data-i]"); if(!b) return;
+    state.index=parseInt(b.getAttribute("data-i"),10); save(); render();
+  });
   document.getElementById("btnReset").addEventListener("click", function(){
-    state={index:0,score:0,solved:{}}; save(); render();
+    state={index:0,score:0,correct:{},wrong:{}}; save(); render();
   });
 
   /* insertion dans le champ actif */

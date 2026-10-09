@@ -113,7 +113,8 @@
   .vial{position:fixed;left:20px;top:20px;bottom:20px;width:38px;z-index:55;pointer-events:none}
   .vial-glass{position:absolute;inset:0;border:3px solid #aeb8c6;border-radius:9px 9px 26px 26px;background:rgba(180,205,230,.15);overflow:hidden;box-shadow:inset 0 0 14px rgba(255,255,255,.55)}
   .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
-  .vial.low .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
+  .vial.warn .vial-liquid{background:linear-gradient(180deg,#ffcf7a,#ff9500)}
+  .vial.danger .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
   .andrea-main{width:100%;display:flex;align-items:center;justify-content:center;min-height:132px}
   /* ---- bonus « +10 s » qui monte dans la surimpression ---- */
   .bonus-float{
@@ -123,6 +124,7 @@
     opacity:0;pointer-events:none;white-space:nowrap;
   }
   .bonus-float.show{animation:bonusRise 1.1s ease}
+  .bonus-float.pen{color:var(--carry)}
   @keyframes bonusRise{
     0%{opacity:0;transform:translate(-50%,-30px) scale(.7)}
     25%{opacity:1;transform:translate(-50%,-150px) scale(1.2)}
@@ -449,6 +451,7 @@
      +10 s de liquide par bonne réponse */
   var DURATION = 60000;
   var BONUS_MS = 10000;
+  var PENALTY_MS = 5000;
   var CLARA_BEST_KEY = "multiplication_clara_record";
 
   /* =========================================================
@@ -484,7 +487,8 @@
   function renderClaraClock(){
     var pct = Math.max(0, Math.min(1, clara.remaining / DURATION));
     claraVialLiquid.style.height = (pct * 100) + "%";
-    claraVial.classList.toggle("low", clara.remaining <= 10000);
+    claraVial.classList.toggle("warn", clara.remaining <= DURATION * 0.5 && clara.remaining > DURATION * 0.2);
+    claraVial.classList.toggle("danger", clara.remaining <= DURATION * 0.2);
   }
   function claraTick(ts){
     if (!clara.running) return;
@@ -590,7 +594,11 @@
       claraKeypad.shake();
       claraKeypad.reset();
       flashCorgi("sad");
-      msgClara.textContent = "Pas tout à fait… réessaie !";
+      clara.remaining = Math.max(0, clara.remaining - PENALTY_MS);
+      renderClaraClock();
+      showBonus("−5 s", true);
+      if (clara.remaining <= 0){ endClara(); return; }
+      msgClara.textContent = "Pas tout à fait… −5 secondes, réessaie !";
       msgClara.className = "msg no";
     }
   }
@@ -638,7 +646,7 @@
   var andreaStart = document.getElementById("andreaStart");
   var msgAndrea = document.getElementById("msgAndrea");
   var andreaBonus = document.getElementById("andreaBonus");
-  var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea);
+  var andreaKeypad = makeKeypad(document.getElementById("andreaAnswer"), document.getElementById("andreaKeys"), checkAndrea, checkAndrea);
 
   var BEST_KEY = "multiplication_cm2_best";
   var andrea = {
@@ -659,10 +667,13 @@
   function renderClock(){
     var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
     andreaVialLiquid.style.height = (pct * 100) + "%";
-    andreaVial.classList.toggle("low", andrea.remaining <= 10000);
+    andreaVial.classList.toggle("warn", andrea.remaining <= DURATION * 0.5 && andrea.remaining > DURATION * 0.2);
+    andreaVial.classList.toggle("danger", andrea.remaining <= DURATION * 0.2);
   }
 
-  function showBonus(){
+  function showBonus(txt, pen){
+    andreaBonus.textContent = txt || "+10 s";
+    andreaBonus.classList.toggle("pen", !!pen);
     andreaBonus.classList.remove("show");
     void andreaBonus.offsetWidth;
     andreaBonus.classList.add("show");
@@ -726,6 +737,9 @@
     if (!andrea.active || !andrea.running) return;
     var raw = andreaKeypad.value();
     if (raw === "") return;
+    var target = String(andrea.ans);
+    /* validation automatique : tant que la saisie est un début possible, on attend */
+    if (raw !== target && target.indexOf(raw) === 0) return;
     var v = parseInt(raw, 10);
     if (v === andrea.ans){
       stopClock();
@@ -747,7 +761,12 @@
     } else {
       andreaKeypad.shake();
       andreaKeypad.reset();
-      msgAndrea.textContent = "Non… cherche encore, la fiole se vide !";
+      flashCorgi("sad");
+      andrea.remaining = Math.max(0, andrea.remaining - PENALTY_MS);
+      renderClock();
+      showBonus("−5 s", true);
+      if (andrea.remaining <= 0){ endAndrea(); return; }
+      msgAndrea.textContent = "Non… −5 secondes, cherche encore !";
       msgAndrea.className = "msg no";
     }
   }

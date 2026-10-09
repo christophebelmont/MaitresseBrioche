@@ -133,7 +133,8 @@
   .vial{position:absolute;left:0;top:0;bottom:0;width:34px;z-index:3;cursor:pointer}
   .vial-glass{position:absolute;inset:0;border:3px solid #aeb8c6;border-radius:8px 8px 22px 22px;background:rgba(180,205,230,.15);overflow:hidden;box-shadow:inset 0 0 12px rgba(255,255,255,.55)}
   .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
-  .vial.low .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
+  .vial.warn .vial-liquid{background:linear-gradient(180deg,#ffcf7a,#ff9500)}
+  .vial.danger .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
 
   /* ---- sélecteur des tables (Clara) : 2 colonnes, bleu = 1er facteur, rouge = 2e ---- */
   .tables{
@@ -199,6 +200,7 @@
     opacity:0;pointer-events:none;white-space:nowrap;
   }
   .bonus-float.show{animation:bonusRise 1.1s ease}
+  .bonus-float.pen{color:var(--carry)}
   @keyframes bonusRise{
     0%{opacity:0;transform:translate(-50%,-30px) scale(.7)}
     25%{opacity:1;transform:translate(-50%,-150px) scale(1.2)}
@@ -347,7 +349,7 @@
   var overlayImg = document.getElementById("overlayImg");
   var bonusFloat = document.getElementById("bonusFloat");
 
-  var DURATION = 60000, BONUS = 10000, BONUS_ANDREA = 2000;
+  var DURATION = 60000, BONUS = 10000, BONUS_ANDREA = 2000, PENALTY = 5000;
   var BEST_CLARA = "multiplication_clara_record";
   var BEST_ANDREA = "multiplication_cm2_best";
 
@@ -432,8 +434,9 @@
     if (overlayTimer) clearTimeout(overlayTimer);
     overlayTimer = setTimeout(function(){ overlay.classList.remove("show"); }, kind === "happy" ? 900 : 800);
   }
-  function showBonus(sec){
-    bonusFloat.textContent = "+" + sec + " s";
+  function showBonus(txt, pen){
+    bonusFloat.textContent = txt;
+    bonusFloat.classList.toggle("pen", !!pen);
     bonusFloat.classList.remove("show");
     void bonusFloat.offsetWidth;
     bonusFloat.classList.add("show");
@@ -505,7 +508,8 @@
   function renderClaraClock(){
     var pct = Math.max(0, Math.min(1, clara.remaining / DURATION));
     claraVialLiquid.style.height = (pct * 100) + "%";
-    claraVial.classList.toggle("low", clara.remaining <= 10000);
+    claraVial.classList.toggle("warn", clara.remaining <= DURATION * 0.5 && clara.remaining > DURATION * 0.2);
+    claraVial.classList.toggle("danger", clara.remaining <= DURATION * 0.2);
   }
   function claraTick(ts){
     if (!clara.running) return;
@@ -569,7 +573,7 @@
     playBravoSound();
     launchConfetti();
     flashCorgi("happy");
-    showBonus(10);
+    showBonus("+10 s");
     clara.nextTimer = setTimeout(function(){ if (clara.active) newClara(); }, 900);
   }
 
@@ -586,7 +590,8 @@
   function renderClock(){
     var pct = Math.max(0, Math.min(1, andrea.remaining / DURATION));
     andreaVialLiquid.style.height = (pct * 100) + "%";
-    andreaVial.classList.toggle("low", andrea.remaining <= 10000);
+    andreaVial.classList.toggle("warn", andrea.remaining <= DURATION * 0.5 && andrea.remaining > DURATION * 0.2);
+    andreaVial.classList.toggle("danger", andrea.remaining <= DURATION * 0.2);
   }
   function clockTick(ts){
     if (!andrea.running) return;
@@ -645,7 +650,7 @@
     playBravoSound();
     launchConfetti();
     flashCorgi("happy");
-    showBonus(2);
+    showBonus("+2 s");
     andrea.nextTimer = setTimeout(function(){
       if (!andrea.active) return;
       newAndreaProblem();
@@ -663,6 +668,17 @@
     renderAnswer();
     keypad.classList.remove("shake"); void keypad.offsetWidth; keypad.classList.add("shake");
     flashCorgi("sad");
+    /* pénalité : on retire 5 s au temps restant */
+    st.remaining = Math.max(0, st.remaining - PENALTY);
+    if (st === clara){
+      renderClaraClock();
+      showBonus("−5 s", true);
+      if (clara.remaining <= 0){ endClara(); }
+    } else {
+      renderClock();
+      showBonus("−5 s", true);
+      if (andrea.remaining <= 0){ endAndrea(); }
+    }
   }
 
   /* ---------- clavier ---------- */
