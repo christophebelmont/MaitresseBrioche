@@ -267,7 +267,7 @@
 
   <h1>Les bases de numération</h1>
   <p class="lead">
-    Binaire, ternaire, quaternaire, octal, décimal, hexadécimal… Tous ces systèmes comptent
+    Binaire, ternaire, quaternaire, quinaire, octal, décimal, hexadécimal… Tous ces systèmes comptent
     pareil : avec des <b>paquets</b> et des <b>colonnes de poids</b>. Explore, fabrique des nombres,
     puis joue à convertir !
   </p>
@@ -300,7 +300,7 @@
 
   <div class="stage">
     <h2>Le même nombre dans toutes les bases</h2>
-    <p class="sub">Un seul nombre, six écritures différentes. Repère comment les chiffres changent alors que la quantité reste la même.</p>
+    <p class="sub">Un seul nombre, sept écritures différentes. Repère comment les chiffres changent alors que la quantité reste la même.</p>
     <div class="compare-wrap">
       <table class="compare" id="compareTable"></table>
     </div>
@@ -370,6 +370,7 @@
     { b:2,  name:"Binaire",      color:"#0071e3" },
     { b:3,  name:"Ternaire",     color:"#30b0c7" },
     { b:4,  name:"Quaternaire",  color:"#34c759" },
+    { b:5,  name:"Quinaire",     color:"#5856d6" },
     { b:8,  name:"Octal",        color:"#ff9500" },
     { b:10, name:"Décimal",      color:"#af52de" },
     { b:16, name:"Hexadécimal",  color:"#ff375f" }
@@ -628,8 +629,8 @@
   /* =========================================================
      JOUER
      ========================================================= */
-  var BASE_OPTIONS = [2,3,4,8,16];
-  var QMAX = { 2:255, 3:80, 4:255, 8:255, 16:255 };
+  var BASE_OPTIONS = [2,3,4,5,8,16];
+  var QMAX = { 2:255, 3:80, 4:255, 5:124, 8:255, 16:255 };
   var DURATION = 60000;
   var BONUS_MS = 10000;
   var BEST_KEY = "bases_numerotation_best";
@@ -649,7 +650,7 @@
   var play = {
     active:false, running:false, remaining:DURATION, lastTs:null, raf:null,
     score:0, answered:false, q:null, nextTimer:null, input:"",
-    bases:[2,3,4,8,16],
+    bases:[2,3,4,5,8,16],
     best: parseInt(localStorage.getItem(BEST_KEY),10) || 0
   };
   bestEl.textContent = play.best;
