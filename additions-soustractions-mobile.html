@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f5f7">
+<title>Ajouter et retirer 8 ou 9</title>
+<script>
+  /* la version mobile n'est proposée que sur téléphone / tablette
+     (ajouter ?mobile=1 pour la forcer depuis un ordinateur) */
+  (function(){
+    try{
+      if (new URLSearchParams(location.search).get("mobile") === "1") return;
+      var ua = navigator.userAgent || "";
+      var mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+      if (!mobile && window.matchMedia && window.matchMedia("(pointer: coarse)").matches){
+        mobile = Math.min(window.innerWidth, window.innerHeight) <= 820;
+      }
+      if (!mobile) location.replace("additions-soustractions.html");
+    }catch(e){}
+  })();
+</script>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --line:#e5e5ea;
+    --txt:#1d1d1f;
+    --muted:#6e6e73;
+    --on:#ff9500;
+    --ok:#34c759;
+    --ok-text:#248a3d;
+    --carry:#ff375f;
+    --blue:#0071e3;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    color:var(--txt);
+    background:var(--bg);
+    overflow:hidden;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .app{
+    height:100vh;
+    height:100dvh;
+    display:flex;flex-direction:column;
+    gap:6px;
+    padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  /* ---- barre du haut : score (gauche), record (droite) ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:2.2rem}
+  .score{font-weight:600;font-size:.86rem;line-height:1.15;color:var(--muted);white-space:nowrap}
+  #mScore{text-align:left}
+  #mRecord{text-align:right}
+  .score b{color:var(--on);font-size:1.35rem;font-weight:800}
+  .score.rec b{color:var(--blue);font-size:1rem}
+
+  /* ---- zone centrale ---- */
+  .stage{
+    position:relative;
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;overflow:hidden;
+  }
+
+  .timer{
+    font-size:clamp(2rem,11vw,3rem);
+    font-weight:800;font-variant-numeric:tabular-nums;
+    color:var(--blue);line-height:1;
+    letter-spacing:-1px;transition:color .2s;
+  }
+  .timer.low{color:var(--carry);animation:pulse .8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  .problem{
+    font-size:clamp(2.6rem,15vw,4.2rem);
+    font-weight:800;
+    color:var(--txt);
+    font-variant-numeric:tabular-nums;
+    text-align:center;
+    letter-spacing:-.5px;
+    line-height:1.1;
+  }
+  .problem .op{color:var(--carry)}
+  .problem .eq{color:var(--muted)}
+  .ansv{color:var(--muted)}
+  .ansv.typing{color:var(--blue)}
+  .ansv.ok{color:var(--ok-text)}
+
+  .progress-wrap{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
+  .progress{position:relative;flex:1;height:14px;border-radius:999px;background:#e8e8ed;border:1px solid var(--line);overflow:hidden}
+  .progress i{position:absolute;top:0;left:0;bottom:0;width:0;background:linear-gradient(90deg,#34c759,#0071e3);transition:width .25s ease}
+  .progress-label{font-weight:800;color:var(--on);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:4.2em;text-align:right}
+
+  .hint{color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;min-height:1.2em}
+
+  /* ---- fiole de liquide : sur toute la hauteur ---- */
+  .vial{position:absolute;left:0;top:0;bottom:0;width:34px;z-index:3;cursor:pointer}
+  .vial-glass{position:absolute;inset:0;border:3px solid #aeb8c6;border-radius:8px 8px 22px 22px;background:rgba(180,205,230,.15);overflow:hidden;box-shadow:inset 0 0 12px rgba(255,255,255,.55)}
+  .vial-liquid{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#6dd5ff,#0071e3);transition:height .1s linear}
+  .vial.warn .vial-liquid{background:linear-gradient(180deg,#ffcf7a,#ff9500)}
+  .vial.danger .vial-liquid{background:linear-gradient(180deg,#ff9a6c,#ff375f)}
+
+  /* ---- gros pavé numérique (validation automatique) ---- */
+  .keypad{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    width:100%;max-width:520px;margin:0 auto;
+  }
+  .keypad button{
+    font:inherit;font-weight:700;font-size:1.9rem;
+    height:clamp(46px,9.5vh,70px);
+    border-radius:16px;border:1px solid var(--line);
+    background:#fff;color:var(--txt);cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
+    touch-action:manipulation;
+  }
+  .keypad button:active{transform:scale(.96);background:#eef1f5}
+  .keypad button.del{background:#f2f2f7;color:var(--muted);font-size:1.6rem}
+  .keypad button.zero{grid-column:1 / span 2}
+  .keypad.shake{animation:shake .4s ease}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(3px)}
+  }
+
+  /* ---- surimpression corgi + confettis ---- */
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:62}
+  .overlay{
+    position:fixed;inset:0;z-index:61;
+    display:flex;align-items:flex-end;justify-content:center;
+    padding-bottom:calc(env(safe-area-inset-bottom) + 16px);
+    pointer-events:none;opacity:0;transition:opacity .25s ease;
+  }
+  .overlay.show{opacity:1}
+  .overlay img{
+    width:min(52vw,240px);height:auto;
+    filter:drop-shadow(0 14px 34px rgba(0,0,0,.28));
+    transform:scale(.7);transition:transform .32s cubic-bezier(.2,1.4,.4,1);
+  }
+  .overlay.show img{transform:scale(1)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="score" id="mScore"></div>
+    <div class="score rec" id="mRecord"></div>
+  </header>
+
+  <div class="stage">
+    <div class="vial" id="vial"><div class="vial-glass"><div class="vial-liquid" id="vialLiquid"></div></div></div>
+    <div class="timer" id="mTimer">3:00</div>
+    <div class="problem" id="mProblem">Touche la fiole</div>
+    <div class="progress-wrap">
+      <div class="progress"><i id="mBar"></i></div>
+      <span class="progress-label" id="mProgress">0 / 15</span>
+    </div>
+    <div class="hint" id="mHint">Touche la fiole pour commencer</div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <button type="button" data-k="1">1</button>
+    <button type="button" data-k="2">2</button>
+    <button type="button" data-k="3">3</button>
+    <button type="button" data-k="4">4</button>
+    <button type="button" data-k="5">5</button>
+    <button type="button" data-k="6">6</button>
+    <button type="button" data-k="7">7</button>
+    <button type="button" data-k="8">8</button>
+    <button type="button" data-k="9">9</button>
+    <button type="button" data-k="0" class="zero">0</button>
+    <button type="button" data-k="del" class="del">⌫</button>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <img id="overlayImg" src="TresContent.png" alt="">
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- sons ---------- */
+  var SOUNDS = ["fanfare.mp3", "chien.mp3"];
+  var soundPool = SOUNDS.map(function(src){ var a = new Audio(src); a.preload = "auto"; return a; });
+  function playBravoSound(){
+    if (!soundPool.length) return;
+    try {
+      var a = soundPool[Math.floor(Math.random() * soundPool.length)];
+      a.currentTime = 0;
+      var p = a.play();
+      if (p && p.catch) p.catch(function(){});
+    } catch (e) {}
+  }
+
+  /* ---------- confettis ---------- */
+  var canvas = document.getElementById("confetti");
+  var ctx = canvas.getContext("2d");
+  var parts = [], rafConf = null;
+  var COLORS = ["#ff5c8a", "#ffd23f", "#4ade80", "#5aa9ff", "#f97316", "#a855f7", "#ffffff"];
+  function sizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
+  function launchConfetti(n){
+    var count = n || 40;
+    if (parts.length > 120) return;
+    for (var i = 0; i < count; i++){
+      parts.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.4,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        w: 6 + Math.random() * 8, h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.35,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+    if (!rafConf) rafConf = requestAnimationFrame(tickConfetti);
+  }
+  function tickConfetti(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = parts.length - 1; i >= 0; i--){
+      var p = parts[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.vx *= 0.995; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      if (p.y > canvas.height + 50) parts.splice(i, 1);
+    }
+    if (parts.length) rafConf = requestAnimationFrame(tickConfetti);
+    else { rafConf = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+
+  /* ---------- refs ---------- */
+  var mScore = document.getElementById("mScore");
+  var mRecord = document.getElementById("mRecord");
+  var mTimer = document.getElementById("mTimer");
+  var mProblem = document.getElementById("mProblem");
+  var mBar = document.getElementById("mBar");
+  var mProgress = document.getElementById("mProgress");
+  var mHint = document.getElementById("mHint");
+  var vial = document.getElementById("vial");
+  var vialLiquid = document.getElementById("vialLiquid");
+  var keypad = document.getElementById("keypad");
+  var overlay = document.getElementById("overlay");
+  var overlayImg = document.getElementById("overlayImg");
+
+  var DURATION = 180000;   /* 3 minutes */
+  var GOAL = 15;           /* 15 opérations à réussir */
+  var BEST_KEY = "additions_89_best_time";
+
+  function rndInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+  /* nombres entre 0 et 100 qui se terminent par 8 ou 9 */
+  var SPECIAL = (function(){
+    var arr = [], t;
+    for (t = 0; t <= 9; t++){ arr.push(t * 10 + 8); arr.push(t * 10 + 9); }
+    return arr;
+  })();
+  function rndSpecial(){ return SPECIAL[Math.floor(Math.random() * SPECIAL.length)]; }
+  function mmss(totalSeconds){
+    var m = Math.floor(totalSeconds / 60), s = totalSeconds % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function saveInt(key, v){ try { localStorage.setItem(key, String(v)); } catch (e) {} }
+
+  var overlayTimer = null;
+  function flashCorgi(kind){
+    overlayImg.src = (kind === "happy") ? "TresContent.png"
+                   : (kind === "cry") ? "Pleurs.png"
+                   : "Triste.png";
+    overlay.classList.add("show");
+    if (overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(function(){ overlay.classList.remove("show"); }, kind === "happy" ? 900 : 800);
+  }
+
+  /* ---------- état ---------- */
+  var game = {
+    a:0, b:0, op:"+", ans:0, value:"", locked:false,
+    score:0,
+    best: parseInt(localStorage.getItem(BEST_KEY), 10) || 0,   /* ms, 0 = pas de record */
+    active:false, running:false, paused:false,
+    remaining:DURATION, lastTs:null, raf:null, nextTimer:null
+  };
+
+  function updateHeader(){
+    mScore.innerHTML = '✓ <b>' + game.score + "</b> / " + GOAL;
+    mRecord.innerHTML = "record <b>" + (game.best ? mmss(Math.round(game.best / 1000)) : "--") + "</b>";
+  }
+
+  /* le problème affiche la saisie en cours dans la case de la réponse */
+  function renderProblem(state){
+    var txt, cls;
+    if (state === "empty"){ txt = "?"; cls = "ansv"; }
+    else if (state === "ok"){ txt = String(game.ans); cls = "ansv ok"; }
+    else { txt = game.value; cls = "ansv typing"; }
+    mProblem.innerHTML = game.a + ' <span class="op">' + game.op + '</span> ' +
+      game.b + ' <span class="eq">=</span> <span class="' + cls + '">' + txt + '</span>';
+  }
+
+  function renderProgress(){
+    mBar.style.width = Math.min(100, (game.score / GOAL) * 100) + "%";
+    mProgress.textContent = game.score + " / " + GOAL;
+  }
+
+  function renderClock(){
+    mTimer.textContent = mmss(Math.ceil(game.remaining / 1000));
+    var pct = Math.max(0, Math.min(1, game.remaining / DURATION));
+    vialLiquid.style.height = (pct * 100) + "%";
+    vial.classList.toggle("warn", game.remaining <= DURATION * 0.5 && game.remaining > DURATION * 0.2);
+    vial.classList.toggle("danger", game.remaining <= DURATION * 0.2);
+    mTimer.classList.toggle("low", game.remaining <= 30000);
+  }
+
+  function tick(ts){
+    if (!game.running) return;
+    if (game.lastTs == null) game.lastTs = ts;
+    var dt = ts - game.lastTs; game.lastTs = ts;
+    game.remaining -= dt;
+    if (game.remaining <= 0){ game.remaining = 0; renderClock(); end(false); return; }
+    renderClock();
+    game.raf = requestAnimationFrame(tick);
+  }
+  function startClock(){
+    if (!game.active || game.running) return;
+    game.running = true; game.lastTs = null;
+    game.raf = requestAnimationFrame(tick);
+  }
+  function stopClock(){
+    game.running = false;
+    if (game.raf) cancelAnimationFrame(game.raf);
+    game.raf = null;
+  }
+
+  function newProblem(){
+    if (game.nextTimer){ clearTimeout(game.nextTimer); game.nextTimer = null; }
+    game.locked = false;
+    game.value = "";
+    var sp = rndSpecial();
+    if (Math.random() < 0.5){
+      /* addition : un des deux nombres se termine par 8 ou 9 */
+      game.op = "+";
+      if (Math.random() < 0.5){ game.a = sp; game.b = rndInt(1, 100 - sp); }
+      else { game.b = sp; game.a = rndInt(1, 100 - sp); }
+      game.ans = game.a + game.b;
+    } else {
+      /* soustraction : le résultat reste entre 0 et 100 */
+      game.op = "−";
+      if (Math.random() < 0.5){ game.a = sp; game.b = rndInt(1, game.a); }
+      else { game.b = sp; game.a = rndInt(game.b, 100); }
+      game.ans = game.a - game.b;
+    }
+    renderProblem("empty");
+  }
+
+  function start(){
+    if (game.nextTimer){ clearTimeout(game.nextTimer); game.nextTimer = null; }
+    stopClock();
+    game.active = true; game.paused = false;
+    game.score = 0; game.remaining = DURATION;
+    mHint.textContent = "";
+    updateHeader();
+    renderProgress();
+    renderClock();
+    newProblem();
+    startClock();
+  }
+
+  function end(won){
+    if (game.nextTimer){ clearTimeout(game.nextTimer); game.nextTimer = null; }
+    stopClock();
+    game.active = false;
+    updateHeader();
+    if (won){
+      var elapsed = DURATION - game.remaining;
+      if (!game.best || elapsed < game.best){ game.best = elapsed; saveInt(BEST_KEY, Math.round(elapsed)); }
+      updateHeader();
+      mProblem.innerHTML = "15 <span class=\"eq\">/</span> 15";
+      mHint.textContent = "Réussi ! Touche la fiole pour rejouer";
+      playBravoSound();
+      launchConfetti(120);
+      flashCorgi("happy");
+    } else {
+      mProblem.innerHTML = game.score + ' <span class="eq">/</span> 15';
+      mHint.textContent = "Temps écoulé ! Touche la fiole pour rejouer";
+      flashCorgi(game.score === 0 ? "cry" : "sad");
+    }
+  }
+
+  /* ---------- validation automatique ---------- */
+  function checkAnswer(){
+    if (game.locked) return;
+    var target = String(game.ans), v = game.value;
+    if (v === "") return;
+    if (v === target){ correct(); return; }
+    if (target.indexOf(v) === 0) return;   /* encore un début valide : on attend */
+    wrong();
+  }
+
+  function correct(){
+    game.locked = true;
+    game.value = String(game.ans);
+    renderProblem("ok");
+    game.score++;
+    renderProgress();
+    updateHeader();
+    playBravoSound();
+    launchConfetti();
+    flashCorgi("happy");
+    if (game.score >= GOAL){ end(true); return; }
+    game.nextTimer = setTimeout(function(){ if (game.active) newProblem(); }, 550);
+  }
+
+  function wrong(){
+    game.value = "";
+    renderProblem("empty");
+    keypad.classList.remove("shake"); void keypad.offsetWidth; keypad.classList.add("shake");
+    flashCorgi("sad");
+  }
+
+  /* ---------- clavier ---------- */
+  function press(k){
+    if (!game.running || game.locked) return;
+    if (k === "del"){ game.value = game.value.slice(0, -1); renderProblem(game.value === "" ? "empty" : "typing"); return; }
+    if (game.value.length >= 3) return;
+    if (game.value === "0") game.value = "";
+    game.value += k;
+    renderProblem("typing");
+    checkAnswer();
+  }
+  keypad.addEventListener("click", function(evt){
+    var b = evt.target.closest("button[data-k]");
+    if (!b) return;
+    press(b.getAttribute("data-k"));
+  });
+  document.addEventListener("keydown", function(evt){
+    if (/^[0-9]$/.test(evt.key)) press(evt.key);
+    else if (evt.key === "Backspace"){ evt.preventDefault(); press("del"); }
+  });
+
+  vial.addEventListener("click", function(){ if (!game.active) start(); });
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden){
+      if (game.running){ game.paused = true; stopClock(); }
+    } else if (game.active && game.paused){
+      game.paused = false;
+      startClock();
+    }
+  });
+
+  /* ---------- init ---------- */
+  updateHeader();
+  renderClock();
+  renderProgress();
+})();
+</script>
+</body>
+</html>

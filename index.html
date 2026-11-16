@@ -22,6 +22,8 @@
     --teal-bg:#e4f6f9;
     --pink:#ff375f;
     --pink-bg:#ffe8ee;
+    --indigo:#5856d6;
+    --indigo-bg:#ecebfc;
   }
   *{box-sizing:border-box}
   body{
@@ -85,6 +87,7 @@
   .card.multipli .icon{background:var(--blue-bg);color:var(--blue)}
   .card.bases .icon{background:var(--teal-bg);color:var(--teal)}
   .card.equations .icon{background:var(--pink-bg);color:var(--pink)}
+  .card.ajuster .icon{background:var(--indigo-bg);color:var(--indigo)}
 
   @media(max-width:520px){
     body{padding:40px 16px}
@@ -149,6 +152,17 @@
         </svg>
       </span>
       <span class="name">Les tables de multiplication</span>
+    </a>
+
+    <a class="card ajuster" href="additions-soustractions.html">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4v8"/>
+          <path d="M8 8h8"/>
+          <path d="M8 18h8"/>
+        </svg>
+      </span>
+      <span class="name">Ajouter et retirer 8 ou 9</span>
     </a>
 
     <a class="card bases" href="bases.html">
