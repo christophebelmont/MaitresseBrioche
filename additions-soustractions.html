@@ -200,7 +200,7 @@
 <body>
 
   <h1>Ajouter et retirer 8 ou 9</h1>
-  <p class="sub">Un des deux nombres se termine par <b>8</b> ou <b>9</b>. Fais <b>15 opérations</b> en moins de <b>3 minutes</b> pour réussir !</p>
+  <p class="sub">Le deuxième nombre se termine toujours par <b>8</b> ou <b>9</b>. Fais <b>15 opérations</b> en moins de <b>3 minutes</b> pour réussir !</p>
 
   <div class="stage">
     <div class="vial" id="vial"><div class="vial-glass"><div class="vial-liquid" id="vialLiquid"></div></div></div>
@@ -441,18 +441,17 @@
   function newProblem(){
     if (game.nextTimer){ clearTimeout(game.nextTimer); game.nextTimer = null; }
     game.locked = false;
-    var sp = rndSpecial();
+    /* le 2e nombre se termine toujours par 8 ou 9 ; le 1er peut être quelconque */
+    game.b = rndSpecial();
     if (Math.random() < 0.5){
-      /* addition : un des deux nombres se termine par 8 ou 9 */
+      /* addition : la somme reste entre 0 et 100 */
       game.op = "+";
-      if (Math.random() < 0.5){ game.a = sp; game.b = rndInt(1, 100 - sp); }
-      else { game.b = sp; game.a = rndInt(1, 100 - sp); }
+      game.a = rndInt(1, 100 - game.b);
       game.ans = game.a + game.b;
     } else {
       /* soustraction : le résultat reste entre 0 et 100 */
       game.op = "−";
-      if (Math.random() < 0.5){ game.a = sp; game.b = rndInt(1, game.a); }
-      else { game.b = sp; game.a = rndInt(game.b, 100); }
+      game.a = rndInt(game.b, 100);
       game.ans = game.a - game.b;
     }
     problemEl.innerHTML = game.a + ' <span class="op">' + game.op + '</span> ' +
