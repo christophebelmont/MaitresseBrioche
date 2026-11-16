@@ -441,19 +441,19 @@
   function newProblem(){
     if (game.nextTimer){ clearTimeout(game.nextTimer); game.nextTimer = null; }
     game.locked = false;
-    /* le 2e nombre se termine toujours par 8 ou 9 ; le 1er peut être quelconque */
-    game.b = rndSpecial();
-    if (Math.random() < 0.5){
-      /* addition : la somme reste entre 0 et 100 */
-      game.op = "+";
-      game.a = rndInt(1, 100 - game.b);
-      game.ans = game.a + game.b;
-    } else {
-      /* soustraction : le résultat reste entre 0 et 100 */
-      game.op = "−";
-      game.a = rndInt(game.b, 100);
-      game.ans = game.a - game.b;
-    }
+    /* le 2e nombre se termine toujours par 8 ou 9 ; le 1er peut être quelconque.
+       on écarte les résultats trop faciles : dizaines rondes (10, 20, …) et 100 */
+    game.op = Math.random() < 0.5 ? "+" : "−";
+    do {
+      do { game.b = rndSpecial(); } while (game.op === "+" && game.b === 99);
+      if (game.op === "+"){
+        game.a = rndInt(1, 100 - game.b);   /* la somme reste entre 0 et 100 */
+        game.ans = game.a + game.b;
+      } else {
+        game.a = rndInt(game.b, 100);       /* le résultat reste entre 0 et 100 */
+        game.ans = game.a - game.b;
+      }
+    } while (game.ans % 10 === 0);
     problemEl.innerHTML = game.a + ' <span class="op">' + game.op + '</span> ' +
       game.b + ' <span class="eq">=</span> ?';
     keypad.reset();
