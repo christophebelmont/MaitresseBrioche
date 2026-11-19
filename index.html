@@ -24,6 +24,8 @@
     --pink-bg:#ffe8ee;
     --indigo:#5856d6;
     --indigo-bg:#ecebfc;
+    --mint:#00b894;
+    --mint-bg:#e3f8f2;
   }
   *{box-sizing:border-box}
   body{
@@ -88,6 +90,7 @@
   .card.bases .icon{background:var(--teal-bg);color:var(--teal)}
   .card.equations .icon{background:var(--pink-bg);color:var(--pink)}
   .card.ajuster .icon{background:var(--indigo-bg);color:var(--indigo)}
+  .card.operations .icon{background:var(--mint-bg);color:var(--mint)}
 
   @media(max-width:520px){
     body{padding:40px 16px}
@@ -175,6 +178,17 @@
         </svg>
       </span>
       <span class="name">Les bases de numération</span>
+    </a>
+
+    <a class="card operations" href="operations-bases.html">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <path d="M8 8v6M5 11h6"/>
+          <path d="M14 10l4 4M18 10l-4 4"/>
+        </svg>
+      </span>
+      <span class="name">Opérations en base 2 et 4</span>
     </a>
 
     <a class="card equations" href="equations.html">
