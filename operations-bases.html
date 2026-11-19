@@ -128,6 +128,7 @@
     80%{transform:translateX(3px)}
   }
 
+  .hint{text-align:center;color:var(--muted);font-size:.85rem;line-height:1.5;margin:0;max-width:660px;min-height:1px}
   .legend{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:.82rem;margin:0}
   .legend span{display:inline-flex;align-items:center;gap:7px}
   .legend i{display:inline-block;width:15px;height:15px;border-radius:5px;border:2px solid #cfd4dd;background:#fff}
@@ -186,6 +187,8 @@
     </div>
 
     <div class="posed-wrap" id="posedHost"></div>
+
+    <p class="hint" id="hint"></p>
 
     <p class="legend">
       <span><i class="fill"></i> case à remplir</span>
@@ -358,14 +361,18 @@
     return { base:base, op:"add", cols:cols, rows:rows, a:a, b:b };
   }
 
-  /* ---------- multiplication posée ---------- */
+  /* ---------- multiplication posée ----------
+     Les produits partiels sont additionnés deux par deux : chaque somme
+     intermédiaire est l'addition des deux lignes juste au-dessus.
+     Les retenues restent ainsi de simples chiffres (≤ base-1). */
   function buildMul(base, m, k){
     var a = rndOperand(base, m), b = rndOperand(base, k);
     var A = toDigits(a, base, m), B = toDigits(b, base, k);
-    var cols = m + k + 1;                    /* 1 colonne opérateur + positions 0..m+k-1 */
-    function pToD(pos){ return m + k - pos; }
+    var posCount = m + k;                     /* positions 0..m+k-1 */
+    var cols = posCount + 1;                  /* + colonne opérateur */
+    function pToD(pos){ return posCount - pos; }
     var rows = [];
-    var p, j, i, top;
+    var p, j, i, t;
 
     /* opérande a */
     var ra = blankRow(cols);
@@ -377,62 +384,77 @@
     rb[0] = cOp("×");
     for (p = 0; p < k; p++) rb[pToD(p)] = cGiven(B[p]);
     rows.push(rb);
+    rows.push([cRule()]);
 
     /* produits partiels (un par chiffre du multiplicateur) */
-    var partials = [];
+    var parts = [], partCarries = [];
     for (j = 0; j < k; j++){
-      var t = 0, pp = [], cj = [];
+      var tc = 0, cj = [0];
+      var arr = new Array(posCount);
+      for (i = 0; i < posCount; i++) arr[i] = 0;
       for (i = 0; i < m; i++){
-        var s = A[i] * B[j] + t;
-        pp[i] = s % base;
-        t = Math.floor(s / base);
-        cj[i + 1] = t;
+        var s = A[i] * B[j] + tc;
+        arr[j + i] = s % base;
+        tc = Math.floor(s / base);
+        cj[i + 1] = tc;
       }
-      pp[m] = t;
-      partials.push(pp);
+      arr[j + m] = tc;
+      parts.push(arr);
+      partCarries.push(cj);
+    }
 
-      top = m;
-      while (top > 0 && pp[top] === 0) top--;
+    /* sommes intermédiaires : R1 = P0+P1, R2 = R1+P2, … */
+    var runs = [parts[0].slice()];
+    var runCarries = [null];
+    for (t = 1; t < k; t++){
+      var carry = 0, cArr = [0], next = new Array(posCount);
+      for (p = 0; p < posCount; p++){
+        var sr = runs[t - 1][p] + parts[t][p] + carry;
+        next[p] = sr % base;
+        carry = Math.floor(sr / base);
+        cArr[p + 1] = carry;
+      }
+      runs.push(next);
+      runCarries.push(cArr);
+    }
 
-      /* retenues internes de la ligne (i=1..min(top,m-1)) */
+    function emitPartial(idx){
+      var arr = parts[idx], cj = partCarries[idx];
+      var top = m;
+      while (top > 0 && arr[idx + top] === 0) top--;
       var cr = blankRow(cols);
       for (i = 1; i <= top && i <= m - 1; i++)
-        if (cj[i] !== 0) cr[pToD(j + i)] = cCarry(cj[i]);
+        if (cj[i] !== 0) cr[pToD(idx + i)] = cCarry(cj[i]);
       pushIfNotBlank(rows, cr);
-
-      /* chiffres du produit partiel */
       var pr = blankRow(cols);
-      if (top === 0 && pp[0] === 0){
-        pr[pToD(j)] = cInput(0);
+      if (top === 0 && arr[idx] === 0){
+        pr[pToD(idx)] = cInput(0);
       } else {
-        for (i = 0; i <= top; i++) pr[pToD(j + i)] = cInput(pp[i]);
+        for (i = 0; i <= top; i++) pr[pToD(idx + i)] = cInput(arr[idx + i]);
       }
       rows.push(pr);
     }
 
-    rows.push([cRule()]);
-
-    /* somme finale des produits partiels */
-    var fc = [0], td = [];
-    for (p = 0; p < m + k; p++){
-      var sum = fc[p];
-      for (j = 0; j < k; j++){
-        var i2 = p - j;
-        if (i2 >= 0 && i2 <= m) sum += partials[j][i2];
-      }
-      td[p] = sum % base;
-      fc[p + 1] = Math.floor(sum / base);
+    function emitRunning(idx){
+      var arr = runs[idx], cArr = runCarries[idx];
+      var top = posCount - 1;
+      while (top > 0 && arr[top] === 0) top--;
+      var cr = blankRow(cols);
+      for (p = 1; p <= top; p++)
+        if (cArr[p] !== 0) cr[pToD(p)] = cCarry(cArr[p]);
+      pushIfNotBlank(rows, cr);
+      var rr = blankRow(cols);
+      for (p = 0; p <= top; p++) rr[pToD(p)] = cInput(arr[p]);
+      rows.push(rr);
     }
-    var topT = m + k - 1;
-    while (topT > 0 && td[topT] === 0) topT--;
 
-    var fcr = blankRow(cols);
-    for (p = 1; p <= topT; p++) if (fc[p] !== 0) fcr[pToD(p)] = cCarry(fc[p]);
-    pushIfNotBlank(rows, fcr);
-
-    var rr = blankRow(cols);
-    for (p = 0; p <= topT; p++) rr[pToD(p)] = cInput(td[p]);
-    rows.push(rr);
+    emitPartial(0);
+    emitPartial(1);
+    for (t = 1; t < k; t++){
+      rows.push([cRule()]);
+      emitRunning(t);
+      if (t < k - 1) emitPartial(t + 1);
+    }
 
     return { base:base, op:"mul", cols:cols, rows:rows, a:a, b:b };
   }
@@ -446,7 +468,7 @@
     if (op === "add"){
       return buildAdd(base, rndInt(4, 5));
     }
-    return buildMul(base, base === 2 ? 3 : 2, 2);
+    return buildMul(base, rndInt(4, 5), rndInt(4, 5));
   }
 
   /* ---------- état ---------- */
@@ -462,6 +484,7 @@
   };
 
   var posedHost = document.getElementById("posedHost");
+  var hintEl = document.getElementById("hint");
   var msgEl = document.getElementById("msg");
   var streakEl = document.getElementById("streak");
   var bestEl = document.getElementById("best");
@@ -607,6 +630,9 @@
     state.answered = false;
     state.problem = buildProblem();
     render();
+    hintEl.textContent = state.problem.op === "mul"
+      ? "Additionne les produits partiels deux par deux : chaque somme sous une barre est l'addition des deux lignes juste au-dessus."
+      : "";
     setMsg("", "");
   }
 
