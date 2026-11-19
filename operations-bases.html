@@ -444,7 +444,7 @@
     else op = Math.random() < 0.5 ? "add" : "mul";
 
     if (op === "add"){
-      return buildAdd(base, base === 2 ? 4 : 3);
+      return buildAdd(base, rndInt(4, 5));
     }
     return buildMul(base, base === 2 ? 3 : 2, 2);
   }
